@@ -1,14 +1,169 @@
+// PB02 — Izin lokasi + baca posisi pengguna secara berkala (F01 Location Awareness)
 import Mapbox from "@rnmapbox/maps";
-import { View } from "react-native";
+import * as Location from "expo-location";
+import { useEffect, useRef, useState } from "react";
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
-Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN!);
+Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
 
-export default function Index() {
+// [longitude, latitude] — titik awal perkiraan ITB Jatinangor, diganti saat PB03
+const ITB_JATINANGOR: [number, number] = [107.7697, -6.9275];
+
+type Status = "loading" | "granted" | "denied" | "error";
+
+export default function ExploreMap() {
+  const [status, setStatus] = useState<Status>("loading");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [coords, setCoords] = useState<Location.LocationObjectCoords | null>(null);
+  const [firstFixSec, setFirstFixSec] = useState<number | null>(null);
+
+  const cameraRef = useRef<Mapbox.Camera>(null);
+  const subRef = useRef<Location.LocationSubscription | null>(null);
+  const startRef = useRef(0);
+  const hasCentered = useRef(false);
+
+  function flyTo(c: Location.LocationObjectCoords) {
+    cameraRef.current?.setCamera({
+      centerCoordinate: [c.longitude, c.latitude],
+      zoomLevel: 17,
+      animationDuration: 800,
+    });
+  }
+
+  async function startTracking() {
+    try {
+      const perm = await Location.requestForegroundPermissionsAsync();
+      if (perm.status !== "granted") {
+        setStatus("denied");
+        return;
+      }
+
+      if (!(await Location.hasServicesEnabledAsync())) {
+        setErrorMsg("GPS di HP sedang mati. Nyalakan lokasi, lalu coba lagi.");
+        setStatus("error");
+        return;
+      }
+
+      setStatus("granted");
+      startRef.current = Date.now(); // mulai hitung setelah izin diberikan
+
+      const onLocation = (loc: Location.LocationObject) => {
+        setCoords(loc.coords);
+        setFirstFixSec((prev) => prev ?? (Date.now() - startRef.current) / 1000);
+        if (!hasCentered.current) {
+          hasCentered.current = true;
+          flyTo(loc.coords);
+        }
+      };
+
+      // 1) Tampilkan posisi terakhir yang diketahui HP secara instan
+      //    (maks. 2 menit lalu, akurasi ≤ 100 m) supaya posisi muncul < 5 detik
+      const last = await Location.getLastKnownPositionAsync({
+        maxAge: 120_000,
+        requiredAccuracy: 100,
+      });
+      if (last) onLocation(last);
+
+      // 2) Lalu perbarui terus dengan GPS akurat
+      subRef.current?.remove();
+      subRef.current = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.High, timeInterval: 2000, distanceInterval: 2 },
+        onLocation
+      );
+    } catch (e) {
+      setErrorMsg(String(e));
+      setStatus("error");
+    }
+  }
+
+  async function onRetry() {
+    const perm = await Location.getForegroundPermissionsAsync();
+    if (perm.granted || perm.canAskAgain) return startTracking();
+    Linking.openSettings(); // izin ditolak permanen → arahkan ke pengaturan
+  }
+
+  useEffect(() => {
+    startTracking();
+    return () => subRef.current?.remove();
+  }, []);
+
   return (
-    <View style={{ flex: 1 }}>
-      <Mapbox.MapView style={{ flex: 1 }}>
-        <Mapbox.Camera zoomLevel={16} centerCoordinate={[107.7697, -6.9275]} />
+    <View style={styles.container}>
+      <Mapbox.MapView style={styles.map} scaleBarEnabled={false}>
+        <Mapbox.Camera
+          ref={cameraRef}
+          defaultSettings={{ centerCoordinate: ITB_JATINANGOR, zoomLevel: 16 }}
+        />
+        {status === "granted" && <Mapbox.LocationPuck pulsing={{ isEnabled: true }} />}
       </Mapbox.MapView>
+
+      {status === "granted" && coords && (
+        <>
+          <Pressable style={styles.myLocation} onPress={() => flyTo(coords)}>
+            <Text style={styles.myLocationText}>◎</Text>
+          </Pressable>
+
+          {/* Panel uji untuk bukti acceptance criteria F01 — boleh dihapus nanti */}
+          <View style={styles.debug}>
+            <Text style={styles.debugText}>
+              Lat {coords.latitude.toFixed(6)} · Lng {coords.longitude.toFixed(6)}
+            </Text>
+            <Text style={styles.debugText}>
+              Akurasi ± {Math.round(coords.accuracy ?? 0)} m · Posisi pertama {firstFixSec?.toFixed(1)} detik
+            </Text>
+          </View>
+        </>
+      )}
+
+      {status === "loading" && (
+        <View style={styles.debug}>
+          <Text style={styles.debugText}>Mencari posisi…</Text>
+        </View>
+      )}
+
+      {(status === "denied" || status === "error") && (
+        <View style={styles.overlay}>
+          <Text style={styles.title}>
+            {status === "denied" ? "Izin lokasi ditolak" : "Lokasi tidak tersedia"}
+          </Text>
+          <Text style={styles.body}>
+            {status === "denied"
+              ? "Smart Campuss butuh lokasi untuk menampilkan posisimu dan POI terdekat. Kamu tetap bisa mencari gedung secara manual."
+              : errorMsg}
+          </Text>
+          <Pressable style={styles.button} onPress={onRetry}>
+            <Text style={styles.buttonText}>Izinkan lokasi</Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  map: { flex: 1 },
+  myLocation: {
+    position: "absolute", right: 16, bottom: 120,
+    width: 48, height: 48, borderRadius: 24,
+    backgroundColor: "#fff", alignItems: "center", justifyContent: "center",
+    elevation: 4,
+  },
+  myLocationText: { fontSize: 24, color: "#0F1E33" },
+  debug: {
+    position: "absolute", left: 16, right: 16, bottom: 32,
+    backgroundColor: "rgba(15,30,51,0.85)", borderRadius: 12, padding: 12,
+  },
+  debugText: { color: "#F3F1EA", fontSize: 13 },
+  overlay: {
+    position: "absolute", left: 16, right: 16, bottom: 32,
+    backgroundColor: "#fff", borderRadius: 16, padding: 20, gap: 8, elevation: 6,
+  },
+  title: { fontSize: 18, fontWeight: "700", color: "#0F1E33" },
+  body: { fontSize: 14, color: "#46505E", lineHeight: 20 },
+  button: {
+    marginTop: 8, backgroundColor: "#0F1E33", borderRadius: 10,
+    paddingVertical: 12, alignItems: "center",
+  },
+  buttonText: { color: "#fff", fontWeight: "600" },
+});
