@@ -1,8 +1,10 @@
 // PB02 — Izin lokasi + baca posisi pengguna secara berkala (F01 Location Awareness)
+// PB03 — Dataset 10 POI tampil sebagai marker di peta
 import Mapbox from "@rnmapbox/maps";
 import * as Location from "expo-location";
 import { useEffect, useRef, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { KATEGORI_LABEL, POIS, poiGeoJSON, type POI } from "../data/poi";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
 
@@ -16,6 +18,7 @@ export default function ExploreMap() {
   const [errorMsg, setErrorMsg] = useState("");
   const [coords, setCoords] = useState<Location.LocationObjectCoords | null>(null);
   const [firstFixSec, setFirstFixSec] = useState<number | null>(null);
+  const [selected, setSelected] = useState<POI | null>(null);
 
   const cameraRef = useRef<Mapbox.Camera>(null);
   const subRef = useRef<Location.LocationSubscription | null>(null);
@@ -94,8 +97,60 @@ export default function ExploreMap() {
           ref={cameraRef}
           defaultSettings={{ centerCoordinate: ITB_JATINANGOR, zoomLevel: 16 }}
         />
+
+        {/* Marker 10 POI dari data/poi.json, warna per kategori */}
+        <Mapbox.ShapeSource
+          id="poi-source"
+          shape={poiGeoJSON}
+          onPress={(e) => {
+            const id = e.features[0]?.properties?.id;
+            setSelected(POIS.find((p) => p.id === id) ?? null);
+          }}
+        >
+          <Mapbox.CircleLayer
+            id="poi-circle"
+            style={{
+              circleRadius: 9,
+              circleColor: [
+                "match", ["get", "kategori"],
+                "ikon", "#E4572E",
+                "gedung", "#2F6DB5",
+                "fasilitas", "#3D7A4E",
+                "#666666",
+              ],
+              circleStrokeWidth: 2,
+              circleStrokeColor: "#ffffff",
+            }}
+          />
+          <Mapbox.SymbolLayer
+            id="poi-label"
+            style={{
+              textField: ["get", "nama"],
+              textSize: 12,
+              textAnchor: "top",
+              textOffset: [0, 1.2],
+              textColor: "#0F1E33",
+              textHaloColor: "#ffffff",
+              textHaloWidth: 1.5,
+            }}
+          />
+        </Mapbox.ShapeSource>
+
         {status === "granted" && <Mapbox.LocationPuck pulsing={{ isEnabled: true }} />}
       </Mapbox.MapView>
+
+      {selected && (
+        <View style={styles.poiCard}>
+          <Text style={styles.poiMeta}>
+            {selected.id} · {KATEGORI_LABEL[selected.kategori]}
+          </Text>
+          <Text style={styles.title}>{selected.nama}</Text>
+          <Text style={styles.body} numberOfLines={3}>{selected.deskripsi}</Text>
+          <Pressable onPress={() => setSelected(null)}>
+            <Text style={styles.close}>Tutup</Text>
+          </Pressable>
+        </View>
+      )}
 
       {status === "granted" && coords && (
         <>
@@ -111,6 +166,7 @@ export default function ExploreMap() {
             <Text style={styles.debugText}>
               Akurasi ± {Math.round(coords.accuracy ?? 0)} m · Posisi pertama {firstFixSec?.toFixed(1)} detik
             </Text>
+            <Text style={styles.debugText}>POI dimuat: {POIS.length}</Text>
           </View>
         </>
       )}
@@ -166,4 +222,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12, alignItems: "center",
   },
   buttonText: { color: "#fff", fontWeight: "600" },
+  poiCard: {
+    position: "absolute", left: 16, right: 16, top: 48,
+    backgroundColor: "#fff", borderRadius: 16, padding: 16, gap: 4, elevation: 6,
+  },
+  poiMeta: { fontSize: 12, fontWeight: "700", color: "#B8401C", letterSpacing: 1 },
+  close: { marginTop: 8, color: "#2F6DB5", fontWeight: "600" },
 });
