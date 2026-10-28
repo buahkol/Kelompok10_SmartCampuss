@@ -2,6 +2,7 @@
   "expo": {
     "name": "smart-campuss",
     "slug": "smart-campuss",
+    "owner": "illona081's-team",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
