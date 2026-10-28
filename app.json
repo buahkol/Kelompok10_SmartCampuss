@@ -35,7 +35,13 @@
           "imageWidth": 76
         }
       ],
-      "@rnmapbox/maps"
+      "@rnmapbox/maps",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Menampilkan posisi Anda di peta kampus."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
