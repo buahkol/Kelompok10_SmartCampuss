@@ -124,7 +124,7 @@ export default function ExploreMap() {
 
         {/* Marker 10 POI dari data/poi.json, warna per kategori */}
         <Mapbox.ShapeSource
-          id="poi-source"
+          id="kampus-poi-source"
           shape={poiGeoJSON}
           onPress={(e) => {
             const id = e.features[0]?.properties?.id;
@@ -132,7 +132,7 @@ export default function ExploreMap() {
           }}
         >
           <Mapbox.CircleLayer
-            id="poi-circle"
+            id="kampus-poi-circle"
             style={{
               circleRadius: 9,
               circleColor: [
@@ -147,7 +147,8 @@ export default function ExploreMap() {
             }}
           />
           <Mapbox.SymbolLayer
-            id="poi-label"
+            // id diberi awalan "kampus-" karena style bawaan Mapbox sudah punya layer "poi-label"
+            id="kampus-poi-label"
             style={{
               textField: ["get", "nama"],
               textSize: 12,
