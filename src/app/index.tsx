@@ -2,12 +2,14 @@
 // PB03 — Dataset 10 POI tampil sebagai marker di peta
 // PB04 — Pemicu otomatis saat pengguna masuk radius sebuah POI
 // PB05 — Pop-up info POI: deskripsi, ruangan, dan jarak dari pengguna
+// PB06 — Narasi audio (TTS) diputar otomatis saat pemicu menyala
 import Mapbox from "@rnmapbox/maps";
 import * as Location from "expo-location";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { KATEGORI_LABEL, POIS, poiGeoJSON, sudahDiisi, type POI } from "../data/poi";
 import { jarakMeter, poiAktif, poiTerdekat } from "../utils/geofence";
+import { hentikanNarasi, putarNarasi } from "../utils/narasi";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
 
@@ -29,6 +31,16 @@ export default function ExploreMap() {
   const startRef = useRef(0);
   const hasCentered = useRef(false);
   const nearbyIdRef = useRef<string | null>(null);
+  const [speakingId, setSpeakingId] = useState<string | null>(null); // POI yang narasinya sedang diputar
+
+  function putar(poi: POI) {
+    putarNarasi(
+      poi,
+      () => setSpeakingId(poi.id),
+      // Narasi lama yang disela narasi baru tidak boleh menghapus status narasi baru
+      () => setSpeakingId((cur) => (cur === poi.id ? null : cur))
+    );
+  }
 
   function flyTo(c: Location.LocationObjectCoords) {
     cameraRef.current?.setCamera({
@@ -69,7 +81,12 @@ export default function ExploreMap() {
         if ((poi?.id ?? null) !== nearbyIdRef.current) {
           nearbyIdRef.current = poi?.id ?? null;
           setNearby(poi);
-          if (poi) setSelected(poi); // tampilkan kartu info (PB05); audio menyusul di PB06
+          if (poi) {
+            setSelected(poi); // tampilkan kartu info (PB05)
+            putar(poi); // bacakan narasi (PB06)
+          } else {
+            hentikanNarasi(); // keluar radius → narasi berhenti
+          }
         }
       };
 
@@ -108,7 +125,10 @@ export default function ExploreMap() {
     // Semua setState di startTracking terjadi setelah `await` (async), bukan sinkron di effect.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     onMount();
-    return () => subRef.current?.remove();
+    return () => {
+      subRef.current?.remove();
+      hentikanNarasi();
+    };
   }, []);
 
   const terdekat = coords ? poiTerdekat(coords, POIS) : null;
@@ -190,9 +210,23 @@ export default function ExploreMap() {
               ))}
             </>
           )}
-          <Pressable onPress={() => setSelected(null)}>
-            <Text style={styles.close}>Tutup</Text>
-          </Pressable>
+          <View style={styles.poiActions}>
+            <Pressable
+              onPress={() => (speakingId === selected.id ? hentikanNarasi() : putar(selected))}
+            >
+              <Text style={styles.close}>
+                {speakingId === selected.id ? "Hentikan narasi" : "Putar narasi"}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                if (speakingId === selected.id) hentikanNarasi();
+                setSelected(null);
+              }}
+            >
+              <Text style={styles.close}>Tutup</Text>
+            </Pressable>
+          </View>
         </View>
       )}
 
@@ -279,6 +313,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff", borderRadius: 16, padding: 16, gap: 4, elevation: 6,
   },
   poiMeta: { fontSize: 12, fontWeight: "700", color: "#B8401C", letterSpacing: 1 },
+  poiActions: { flexDirection: "row", justifyContent: "space-between" },
   poiNearby: { fontSize: 13, fontWeight: "600", color: "#3D7A4E" },
   poiDistance: { fontSize: 13, color: "#46505E" },
   poiSection: { marginTop: 6, fontSize: 13, fontWeight: "700", color: "#0F1E33" },
