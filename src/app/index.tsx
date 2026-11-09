@@ -2,7 +2,7 @@
 // PB03 — Dataset 10 POI tampil sebagai marker di peta
 import Mapbox from "@rnmapbox/maps";
 import * as Location from "expo-location";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { KATEGORI_LABEL, POIS, poiGeoJSON, type POI } from "../data/poi";
 
@@ -85,8 +85,15 @@ export default function ExploreMap() {
     Linking.openSettings(); // izin ditolak permanen → arahkan ke pengaturan
   }
 
-  useEffect(() => {
+  // useEffectEvent: selalu memakai startTracking terbaru tanpa jadi dependency effect
+  const onMount = useEffectEvent(() => {
     startTracking();
+  });
+
+  useEffect(() => {
+    // Semua setState di startTracking terjadi setelah `await` (async), bukan sinkron di effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    onMount();
     return () => subRef.current?.remove();
   }, []);
 
