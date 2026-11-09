@@ -1,12 +1,13 @@
 // PB02 — Izin lokasi + baca posisi pengguna secara berkala (F01 Location Awareness)
 // PB03 — Dataset 10 POI tampil sebagai marker di peta
 // PB04 — Pemicu otomatis saat pengguna masuk radius sebuah POI
+// PB05 — Pop-up info POI: deskripsi, ruangan, dan jarak dari pengguna
 import Mapbox from "@rnmapbox/maps";
 import * as Location from "expo-location";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
-import { KATEGORI_LABEL, POIS, poiGeoJSON, type POI } from "../data/poi";
-import { poiAktif, poiTerdekat } from "../utils/geofence";
+import { KATEGORI_LABEL, POIS, poiGeoJSON, sudahDiisi, type POI } from "../data/poi";
+import { jarakMeter, poiAktif, poiTerdekat } from "../utils/geofence";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
 
@@ -111,6 +112,7 @@ export default function ExploreMap() {
   }, []);
 
   const terdekat = coords ? poiTerdekat(coords, POIS) : null;
+  const ruangan = selected?.ruangan.filter(sudahDiisi) ?? [];
 
   return (
     <View style={styles.container}>
@@ -167,7 +169,26 @@ export default function ExploreMap() {
             {selected.id} · {KATEGORI_LABEL[selected.kategori]}
           </Text>
           <Text style={styles.title}>{selected.nama}</Text>
-          <Text style={styles.body} numberOfLines={3}>{selected.deskripsi}</Text>
+          {nearby?.id === selected.id ? (
+            <Text style={styles.poiNearby}>Kamu sedang berada di dekat sini</Text>
+          ) : (
+            coords && (
+              <Text style={styles.poiDistance}>
+                ± {Math.round(jarakMeter(coords, selected))} m dari posisimu
+              </Text>
+            )
+          )}
+          <Text style={styles.body} numberOfLines={6}>
+            {sudahDiisi(selected.deskripsi) ? selected.deskripsi : "Deskripsi belum tersedia."}
+          </Text>
+          {ruangan.length > 0 && (
+            <>
+              <Text style={styles.poiSection}>Ruangan & fasilitas</Text>
+              {ruangan.map((r) => (
+                <Text key={r} style={styles.body}>• {r}</Text>
+              ))}
+            </>
+          )}
           <Pressable onPress={() => setSelected(null)}>
             <Text style={styles.close}>Tutup</Text>
           </Pressable>
@@ -257,5 +278,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff", borderRadius: 16, padding: 16, gap: 4, elevation: 6,
   },
   poiMeta: { fontSize: 12, fontWeight: "700", color: "#B8401C", letterSpacing: 1 },
+  poiNearby: { fontSize: 13, fontWeight: "600", color: "#3D7A4E" },
+  poiDistance: { fontSize: 13, color: "#46505E" },
+  poiSection: { marginTop: 6, fontSize: 13, fontWeight: "700", color: "#0F1E33" },
   close: { marginTop: 8, color: "#2F6DB5", fontWeight: "600" },
 });

@@ -26,6 +26,9 @@ export const KATEGORI_LABEL: Record<KategoriPOI, string> = {
   fasilitas: "Fasilitas kampus",
 };
 
+// Isi yang masih berupa placeholder "[...]" dianggap belum tersedia
+export const sudahDiisi = (teks: string) => !/^\[.*\]$/.test(teks.trim());
+
 // Format GeoJSON untuk ditampilkan Mapbox sebagai layer marker
 export const poiGeoJSON = {
   type: "FeatureCollection" as const,
