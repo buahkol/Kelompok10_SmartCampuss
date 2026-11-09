@@ -22,6 +22,7 @@ export type POI = {
 // jadi setiap nama file di poi.json perlu didaftarkan di sini.
 export const FOTO_POI: Record<string, number> = {
   "p01.jpg": require("../../assets/images/poi/p01.jpg"),
+  "p02.jpg": require("../../assets/images/poi/p02.jpg"),
   "p03.jpg": require("../../assets/images/poi/p03.jpg"),
   "p04.jpg": require("../../assets/images/poi/p04.jpg"),
   "p05.jpg": require("../../assets/images/poi/p05.jpg"),

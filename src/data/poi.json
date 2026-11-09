@@ -15,17 +15,17 @@
   },
   {
     "id": "P02",
-    "nama": "Danau",
-    "kategori": "ikon",
-    "lat": -6.9270,
-    "lng": 107.7705,
+    "nama": "GSG",
+    "kategori": "gedung",
+    "lat": -6.9263875,
+    "lng": 107.7695781,
     "radiusM": 15,
     "koordinatTerverifikasi": false,
-    "mapsUrl": "https://maps.app.goo.gl/QXREZX8kbpknqbd2A",
-    "deskripsi": "[Deskripsi lanskap + fungsi area resapan air/ekosistem kampus]",
+    "mapsUrl": "https://maps.app.goo.gl/frkP89pMZeaGe1jj6",
+    "deskripsi": "Gedung Serba Guna. Sebagian besar berisi ruang perkuliahan, dan sesuai namanya kadang dipakai untuk expo maupun acara lain.",
     "ruangan": [],
-    "naskahAudio": "[Naskah narasi fakta unik danau, ±30 detik]",
-    "foto": null
+    "naskahAudio": "[Naskah narasi fakta unik/sejarah gedung, ±30 detik]",
+    "foto": "p02.jpg"
   },
   {
     "id": "P03",
