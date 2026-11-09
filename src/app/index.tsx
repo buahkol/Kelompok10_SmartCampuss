@@ -1,10 +1,12 @@
 // PB02 — Izin lokasi + baca posisi pengguna secara berkala (F01 Location Awareness)
 // PB03 — Dataset 10 POI tampil sebagai marker di peta
+// PB04 — Pemicu otomatis saat pengguna masuk radius sebuah POI
 import Mapbox from "@rnmapbox/maps";
 import * as Location from "expo-location";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { KATEGORI_LABEL, POIS, poiGeoJSON, type POI } from "../data/poi";
+import { poiAktif, poiTerdekat } from "../utils/geofence";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
 
@@ -19,11 +21,13 @@ export default function ExploreMap() {
   const [coords, setCoords] = useState<Location.LocationObjectCoords | null>(null);
   const [firstFixSec, setFirstFixSec] = useState<number | null>(null);
   const [selected, setSelected] = useState<POI | null>(null);
+  const [nearby, setNearby] = useState<POI | null>(null); // POI yang radiusnya sedang dimasuki
 
   const cameraRef = useRef<Mapbox.Camera>(null);
   const subRef = useRef<Location.LocationSubscription | null>(null);
   const startRef = useRef(0);
   const hasCentered = useRef(false);
+  const nearbyIdRef = useRef<string | null>(null);
 
   function flyTo(c: Location.LocationObjectCoords) {
     cameraRef.current?.setCamera({
@@ -56,6 +60,15 @@ export default function ExploreMap() {
         if (!hasCentered.current) {
           hasCentered.current = true;
           flyTo(loc.coords);
+        }
+
+        // Pemicu hanya jalan saat POI aktif berganti (masuk/keluar radius),
+        // jadi tidak terulang selama pengguna masih di dalam radius yang sama
+        const poi = poiAktif(loc.coords, POIS, nearbyIdRef.current);
+        if ((poi?.id ?? null) !== nearbyIdRef.current) {
+          nearbyIdRef.current = poi?.id ?? null;
+          setNearby(poi);
+          if (poi) setSelected(poi); // tampilkan kartu info (PB05); audio menyusul di PB06
         }
       };
 
@@ -96,6 +109,8 @@ export default function ExploreMap() {
     onMount();
     return () => subRef.current?.remove();
   }, []);
+
+  const terdekat = coords ? poiTerdekat(coords, POIS) : null;
 
   return (
     <View style={styles.container}>
@@ -174,6 +189,14 @@ export default function ExploreMap() {
               Akurasi ± {Math.round(coords.accuracy ?? 0)} m · Posisi pertama {firstFixSec?.toFixed(1)} detik
             </Text>
             <Text style={styles.debugText}>POI dimuat: {POIS.length}</Text>
+            {terdekat && (
+              <Text style={styles.debugText}>
+                Terdekat: {terdekat.poi.nama} · {Math.round(terdekat.jarak)} m (radius {terdekat.poi.radiusM} m)
+              </Text>
+            )}
+            <Text style={styles.debugText}>
+              Pemicu: {nearby ? `${nearby.id} ${nearby.nama}` : "di luar radius"}
+            </Text>
           </View>
         </>
       )}
