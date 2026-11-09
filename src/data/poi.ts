@@ -15,7 +15,21 @@ export type POI = {
   deskripsi: string;
   ruangan: string[];
   naskahAudio: string;
-  foto: string | null;
+  foto: string | null; // nama file di assets/images/poi, lihat FOTO_POI
+};
+
+// PB07 — Foto POI. Aset lokal harus di-require secara statis supaya ikut ter-bundle,
+// jadi setiap nama file di poi.json perlu didaftarkan di sini.
+export const FOTO_POI: Record<string, number> = {
+  "p01.jpg": require("../../assets/images/poi/p01.jpg"),
+  "p03.jpg": require("../../assets/images/poi/p03.jpg"),
+  "p04.jpg": require("../../assets/images/poi/p04.jpg"),
+  "p05.jpg": require("../../assets/images/poi/p05.jpg"),
+  "p06.jpg": require("../../assets/images/poi/p06.jpg"),
+  "p07.jpg": require("../../assets/images/poi/p07.jpg"),
+  "p08.jpg": require("../../assets/images/poi/p08.jpg"),
+  "p09.jpg": require("../../assets/images/poi/p09.jpg"),
+  "p10.jpg": require("../../assets/images/poi/p10.jpg"),
 };
 
 export const POIS = raw as POI[];

@@ -3,11 +3,13 @@
 // PB04 — Pemicu otomatis saat pengguna masuk radius sebuah POI
 // PB05 — Pop-up info POI: deskripsi, ruangan, dan jarak dari pengguna
 // PB06 — Narasi audio (TTS) diputar otomatis saat pemicu menyala
+// PB07 — Foto POI di kartu info
 import Mapbox from "@rnmapbox/maps";
+import { Image } from "expo-image";
 import * as Location from "expo-location";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
-import { KATEGORI_LABEL, POIS, poiGeoJSON, sudahDiisi, type POI } from "../data/poi";
+import { FOTO_POI, KATEGORI_LABEL, POIS, poiGeoJSON, sudahDiisi, type POI } from "../data/poi";
 import { jarakMeter, poiAktif, poiTerdekat } from "../utils/geofence";
 import { hentikanNarasi, putarNarasi } from "../utils/narasi";
 
@@ -133,6 +135,7 @@ export default function ExploreMap() {
 
   const terdekat = coords ? poiTerdekat(coords, POIS) : null;
   const ruangan = selected?.ruangan.filter(sudahDiisi) ?? [];
+  const foto = selected?.foto ? FOTO_POI[selected.foto] : undefined;
 
   return (
     <View style={styles.container}>
@@ -186,6 +189,15 @@ export default function ExploreMap() {
 
       {selected && (
         <View style={styles.poiCard}>
+          {foto && (
+            <Image
+              source={foto}
+              style={styles.poiPhoto}
+              contentFit="cover"
+              transition={200}
+              accessibilityLabel={`Foto ${selected.nama}`}
+            />
+          )}
           <Text style={styles.poiMeta}>
             {selected.id} · {KATEGORI_LABEL[selected.kategori]}
           </Text>
@@ -313,6 +325,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff", borderRadius: 16, padding: 16, gap: 4, elevation: 6,
   },
   poiMeta: { fontSize: 12, fontWeight: "700", color: "#B8401C", letterSpacing: 1 },
+  poiPhoto: { width: "100%", height: 150, borderRadius: 10, marginBottom: 6 },
   poiActions: { flexDirection: "row", justifyContent: "space-between" },
   poiNearby: { fontSize: 13, fontWeight: "600", color: "#3D7A4E" },
   poiDistance: { fontSize: 13, color: "#46505E" },

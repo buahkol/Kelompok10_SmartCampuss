@@ -11,7 +11,7 @@
     "deskripsi": "[Deskripsi monumen + trivia sejarah pembuatan patung (material daur ulang)]",
     "ruangan": [],
     "naskahAudio": "[Naskah narasi fakta unik ikon kampus, ±30 detik]",
-    "foto": null
+    "foto": "p01.jpg"
   },
   {
     "id": "P02",
@@ -39,7 +39,7 @@
     "deskripsi": "[Profil gedung + laboratorium/fasilitas riset]",
     "ruangan": ["[Nama lab/ruangan 1]", "[Nama lab/ruangan 2]"],
     "naskahAudio": "[Naskah narasi pengenalan gedung, ±30 detik]",
-    "foto": null
+    "foto": "p03.jpg"
   },
   {
     "id": "P04",
@@ -53,7 +53,7 @@
     "deskripsi": "[Deskripsi hunian, fasilitas bersama (ruang belajar, kantin), kapasitas]",
     "ruangan": ["[Fasilitas 1]", "[Fasilitas 2]"],
     "naskahAudio": "[Naskah narasi profil kehidupan asrama, ±30 detik]",
-    "foto": null
+    "foto": "p04.jpg"
   },
   {
     "id": "P05",
@@ -67,7 +67,7 @@
     "deskripsi": "[Deskripsi gedung kuliah umum]",
     "ruangan": ["[Lt. 1: ruang …]", "[Lt. 2: ruang …]"],
     "naskahAudio": "[Naskah narasi fakta unik/sejarah gedung, ±30 detik]",
-    "foto": null
+    "foto": "p05.jpg"
   },
   {
     "id": "P06",
@@ -81,7 +81,7 @@
     "deskripsi": "[Deskripsi gedung kuliah umum]",
     "ruangan": ["[Lt. 1: ruang …]", "[Lt. 2: ruang …]"],
     "naskahAudio": "[Naskah narasi fakta unik/sejarah gedung, ±30 detik]",
-    "foto": null
+    "foto": "p06.jpg"
   },
   {
     "id": "P07",
@@ -95,7 +95,7 @@
     "deskripsi": "[Deskripsi gedung rektorat + layanan yang tersedia]",
     "ruangan": ["[Layanan/ruangan 1]"],
     "naskahAudio": "[Naskah narasi fakta unik/sejarah gedung, ±30 detik]",
-    "foto": null
+    "foto": "p07.jpg"
   },
   {
     "id": "P08",
@@ -109,7 +109,7 @@
     "deskripsi": "[Deskripsi gedung KOICA]",
     "ruangan": ["[Lt. 1: ruang …]"],
     "naskahAudio": "[Naskah narasi fakta unik/sejarah gedung, ±30 detik]",
-    "foto": null
+    "foto": "p08.jpg"
   },
   {
     "id": "P09",
@@ -123,7 +123,7 @@
     "deskripsi": "[Deskripsi gedung kuliah umum]",
     "ruangan": ["[Lt. 1: ruang …]", "[Lt. 2: ruang …]"],
     "naskahAudio": "[Naskah narasi fakta unik/sejarah gedung, ±30 detik]",
-    "foto": null
+    "foto": "p09.jpg"
   },
   {
     "id": "P10",
@@ -137,6 +137,6 @@
     "deskripsi": "[Deskripsi arsitektur masjid + fasilitas ibadah]",
     "ruangan": ["[Fasilitas 1]"],
     "naskahAudio": "[Naskah narasi sejarah/fakta unik masjid, ±30 detik]",
-    "foto": null
+    "foto": "p10.jpg"
   }
 ]
