@@ -23,7 +23,7 @@
     "koordinatTerverifikasi": false,
     "mapsUrl": "https://maps.app.goo.gl/frkP89pMZeaGe1jj6",
     "deskripsi": "Gedung serbaguna seluas 3.098 m² dengan kapasitas sekitar 500 orang yang sering digunakan untuk pameran seni dan kegiatan mahasiswa FSRD.",
-    "ruangan": [],
+    "ruangan": ["GSG 1-7 (600 orang)"],
     "naskahAudio": "Selamat datang di Gedung Serba Guna ITB Kampus Jatinangor. Sesuai namanya, gedung ini digunakan untuk berbagai kegiatan. Salah satu yang paling sering diselenggarakan adalah kegiatan mahasiswa Fakultas Seni Rupa dan Desain, seperti pameran karya seni dan berbagai pertunjukan kreatif. GSG memiliki luas sekitar tiga ribu sembilan puluh delapan meter persegi dan mampu menampung kurang lebih lima ratus orang dalam satu waktu. Gedung ini juga memiliki sejarah menarik. Pada tahun dua ribu dua belas, GSG pernah menjadi tempat penyelenggaraan Kontes Robot Indonesia dan pertandingan tenis meja dalam rangkaian ITB Open keempat belas. Acara tersebut turut diikuti oleh atlet tenis meja dari berbagai daerah. Setelah direnovasi pada lima belas Januari dua ribu sembilan belas, fasilitas GSG dilengkapi dengan sarana olahraga berstandar nasional, tribun penonton, serta ruang ganti. Karena itu, gedung ini tidak hanya dimanfaatkan untuk kegiatan seni dan mahasiswa, tetapi juga untuk berbagai kegiatan olahraga.",
     "foto": "p02.jpg"
   },
@@ -37,7 +37,7 @@
     "koordinatTerverifikasi": false,
     "mapsUrl": "https://maps.app.goo.gl/NbwsrnuDKg26ZrP28",
     "deskripsi": "Gedung laboratorium terbaru ITB Jatinangor yang menggabungkan berbagai fasilitas praktikum dan penelitian dengan dukungan teknologi BIM dalam pembangunannya.",
-    "ruangan": ["[Nama lab/ruangan 1]", "[Nama lab/ruangan 2]"],
+    "ruangan": [],
     "naskahAudio": "Selamat datang di Gedung Laboratorium Terpadu, salah satu bangunan terbaru di Kampus ITB Jatinangor yang selesai dibangun pada tahun dua ribu dua puluh enam. Seperti namanya, gedung ini dirancang untuk menggabungkan berbagai laboratorium dalam satu lokasi. Dengan begitu, kegiatan praktikum dan penelitian dari beberapa program studi dapat dilakukan dalam fasilitas yang sama. Pembangunannya dikerjakan oleh PT Total Cakra Alam dengan pengawasan dari unit teknis ITB. Proyek ini ditargetkan selesai dalam seratus delapan puluh hari kalender, lebih cepat dibandingkan rencana awal selama dua ratus empat puluh hari. Salah satu teknologi yang digunakan adalah Building Information Modeling atau BIM. Melalui teknologi ini, bangunan dibuat dalam model tiga dimensi yang dilengkapi dengan simulasi jadwal dan perkiraan biaya. Hal tersebut membantu tim mendeteksi kemungkinan benturan desain sebelum pembangunan dilakukan. Gedung ini juga menerapkan sejumlah konsep ramah lingkungan, seperti pemanfaatan air hujan yang disaring untuk kebutuhan air bersih serta pengolahan air limbah sebelum dibuang. Selama proses pembangunan, aspek keselamatan kerja turut diperhatikan melalui pemeriksaan rutin dan pengarahan keselamatan setiap hari.",
     "foto": "p03.jpg"
   },
@@ -51,7 +51,7 @@
     "koordinatTerverifikasi": false,
     "mapsUrl": "https://maps.app.goo.gl/ETee4ZHnxea7vQbe7",
     "deskripsi": "Kompleks hunian mahasiswa berkapasitas awal sekitar 1.200 orang yang dilengkapi fasilitas bersama dan beragam pilihan makanan di sekitarnya.",
-    "ruangan": ["[Fasilitas 1]", "[Fasilitas 2]"],
+    "ruangan": [],
     "naskahAudio": "Selamat datang di kompleks Asrama Mahasiswa ITB Kampus Jatinangor. Fasilitas ini mulai digunakan sejak Agustus dua ribu dua belas sebagai tempat tinggal bagi mahasiswa yang menjalani kegiatan perkuliahan di kampus. Kompleks asrama ini awalnya terdiri dari empat menara, masing-masing dengan lima lantai. Kamar-kamarnya berada di lantai dua hingga lima dan dilengkapi ruang bersama untuk menunjang kebutuhan penghuni. Di dalam ruang bersama tersedia berbagai fasilitas, seperti kompor, kulkas, meja, kursi, lemari, dan pantry. Pada Januari dua ribu dua puluh, ITB meresmikan menara kelima yang dibangun dengan dukungan Kementerian Pekerjaan Umum dan Perumahan Rakyat. Menara ini memiliki kapasitas sekitar dua ratus empat puluh mahasiswa dan menggunakan komponen beton pracetak. Dua kamar di lantai dasarnya juga disiapkan khusus untuk mahasiswa difabel. Selain sebagai tempat tinggal, kawasan asrama memiliki berbagai fasilitas pendukung. Lokasinya berhadapan langsung dengan lapangan sepak bola dan dikelilingi pilihan tempat makan yang cukup beragam, termasuk gerai dari merek-merek kuliner yang sudah dikenal di Jatinangor. Tersedia pula musala, toilet umum, meja pingpong, serta ruang terbuka yang bisa dimanfaatkan mahasiswa untuk belajar dan bersantai.",
     "foto": "p04.jpg"
   },
@@ -65,7 +65,10 @@
     "koordinatTerverifikasi": false,
     "mapsUrl": "https://maps.app.goo.gl/ZUS4yJ65VRLToPVo7",
     "deskripsi": "Gedung kuliah empat lantai yang menjadi salah satu pusat perkuliahan mahasiswa, terutama peserta Tahap Persiapan Bersama (TPB).",
-    "ruangan": ["[Lt. 1: ruang …]", "[Lt. 2: ruang …]"],
+    "ruangan": [
+      "Lt. 3: K1.9675, K1.9676 (ber-AC), K1.9677, K1.9678 — 100 orang/ruang",
+      "Lt. 5: K1.9679a, K1.9679b, K1.9680a, K1.9680b — 100 orang/ruang"
+    ],
     "naskahAudio": "Selamat datang di Gedung Kuliah Umum satu, atau yang lebih dikenal sebagai GKU satu. Gedung ini menjadi salah satu tempat utama berlangsungnya kegiatan perkuliahan di ITB Jatinangor, terutama bagi mahasiswa Tahap Persiapan Bersama atau TPB. Bangunan empat lantai ini difungsikan untuk mendukung kegiatan akademik. Ruang kelasnya dapat menampung hingga seratus mahasiswa, sementara auditorium di lantai atas memiliki kapasitas sekitar lima ratus orang. Di bagian lantai dasar juga terdapat selasar terbuka yang digunakan untuk layanan akademik dan berbagai kegiatan kemahasiswaan. Berbeda dengan beberapa gedung lainnya, GKU satu tidak memiliki kantin permanen. Hal ini membuat area dalam gedung lebih difokuskan untuk kegiatan belajar. Jika ingin mencari makanan, mahasiswa dapat menuju kawasan asrama atau fasilitas kuliner lain di sekitar kampus. Ada satu fakta menarik tentang gedung ini. Meskipun memiliki nomor satu, GKU satu justru diresmikan setelah GKU dua, tepatnya pada sembilan belas Januari dua ribu empat belas.",
     "foto": "p05.jpg"
   },
@@ -79,7 +82,10 @@
     "koordinatTerverifikasi": false,
     "mapsUrl": "https://maps.app.goo.gl/P98SS631nWUdigqY8",
     "deskripsi": "Gedung kuliah empat lantai yang dilengkapi ruang kelas dan auditorium berkapasitas hingga 500 orang untuk mendukung kegiatan akademik.",
-    "ruangan": ["[Lt. 1: ruang …]", "[Lt. 2: ruang …]"],
+    "ruangan": [
+      "Lt. 2: K2.9653 (ber-AC), K2.9654, K2.9655, K2.9656 — 100 orang/ruang",
+      "Lt. 3: K2.9657, auditorium (500 orang)"
+    ],
     "naskahAudio": "Selamat datang di Gedung Kuliah Umum dua, atau GKU dua. Gedung ini terletak tepat di sebelah GKU satu dan menjadi salah satu fasilitas utama untuk menunjang kegiatan akademik mahasiswa ITB Jatinangor. Bangunannya terdiri dari empat lantai dengan ruang kelas yang mampu menampung hingga seratus mahasiswa. Selain itu, tersedia auditorium berkapasitas sekitar lima ratus orang yang dapat digunakan untuk perkuliahan, seminar, maupun kegiatan kampus lainnya. Ruang-ruang di gedung ini juga dilengkapi fasilitas untuk mendukung kegiatan pembelajaran, termasuk perkuliahan secara hybrid. Dengan fasilitas tersebut, GKU dua dapat digunakan untuk berbagai kebutuhan akademik, baik dalam kegiatan belajar sehari-hari maupun acara yang melibatkan lebih banyak peserta. GKU dua menjadi salah satu gedung kuliah umum pertama yang diresmikan di Kampus ITB Jatinangor, yaitu pada delapan belas April dua ribu tiga belas. Peresmiannya dilakukan bersamaan dengan Laboratorium Teknik satu, Gerbang Utama, dan jalan dalam kampus.",
     "foto": "p06.jpg"
   },
@@ -93,7 +99,11 @@
     "koordinatTerverifikasi": false,
     "mapsUrl": "https://maps.app.goo.gl/LjRXNSoWXQaLY4Us6",
     "deskripsi": "Pusat administrasi ITB Jatinangor yang menempati bangunan peninggalan Universitas Winayamukti dengan ciri khas atap bertingkat.",
-    "ruangan": ["[Layanan/ruangan 1]"],
+    "ruangan": [
+      "Lt. 1: U 101 (20), U 110 (10), U 111 (20)",
+      "Lt. 2: U 202 (20)",
+      "Lt. 3: U 301 (150), U 304 (70), U 305 (100), U 307 (60), U 315 (60), U 316 (60)"
+    ],
     "naskahAudio": "Selamat datang di Gedung Rektorat ITB Kampus Jatinangor. Gedung ini menjadi pusat administrasi dan pengelolaan kampus, mulai dari urusan akademik, kepegawaian, hingga pengelolaan fasilitas dan sarana prasarana. Salah satu hal yang membuat bangunan ini mudah dikenali adalah bentuk arsitekturnya. Bagian tengah gedung memiliki atap bertingkat yang tersusun tiga, dengan dua sayap bangunan di sisi kanan dan kirinya. Pada bagian depan terdapat pintu masuk utama dengan atap berbentuk segitiga, dilengkapi lambang ITB. Gedung ini sebenarnya merupakan bagian dari bangunan peninggalan Universitas Winayamukti yang sudah ada sebelum kawasan tersebut dikembangkan menjadi kampus ITB. Dalam catatan aset awal, bangunan ini tercatat sebagai Gedung Rektorat dan Pusat Administrasi. Kehadiran kampus ITB di Jatinangor sendiri berawal dari kerja sama antara ITB dan Pemerintah Provinsi Jawa Barat pada dua puluh tujuh Januari dua ribu sepuluh. Pengembangan kampus ini menjadi salah satu upaya untuk menambah kapasitas pendidikan ITB di luar Kampus Ganesha.",
     "foto": "p07.jpg"
   },
@@ -107,7 +117,10 @@
     "koordinatTerverifikasi": false,
     "mapsUrl": "https://maps.app.goo.gl/gkMfyQTLXaCWsGHo9",
     "deskripsi": "Gedung pusat penelitian keamanan siber hasil hibah Pemerintah Korea Selatan melalui KOICA yang dilengkapi auditorium, ruang pembelajaran, dan laboratorium riset.",
-    "ruangan": ["[Lt. 1: ruang …]"],
+    "ruangan": [
+      "Lt. 1: Multipurpose (90)",
+      "Lt. 2: Lecture 1, Lecture 2, Lecture 3, Lecture 4 — 40 orang/ruang"
+    ],
     "naskahAudio": "Selamat datang di Laboratorium Teknik tiga, yang lebih dikenal dengan sebutan Gedung KOICA. Gedung ini memiliki nama resmi ITB-Korea Cyber Security Research and Development Center dan berfokus pada bidang keamanan siber. Pembangunannya didukung oleh dana hibah dari Pemerintah Korea Selatan melalui KOICA, atau Korean International Cooperation Agency. Gedung KOICA diresmikan pada tiga puluh Januari dua ribu tiga belas. Peresmian tersebut turut dihadiri oleh Duta Besar Korea Selatan untuk Indonesia saat itu, Young Sun Kim. Bangunan ini memiliki tiga lantai dengan fungsi yang berbeda. Lantai pertama digunakan untuk auditorium dan internet plaza. Lantai kedua menjadi tempat kegiatan belajar mengajar, sedangkan lantai ketiga dimanfaatkan sebagai laboratorium keamanan siber dan ruang penelitian. Melalui fasilitas ini, ITB mengembangkan kegiatan penelitian dan inovasi untuk menjawab berbagai tantangan keamanan informasi. Keberadaan gedung ini juga menjadi salah satu bentuk dukungan terhadap perkembangan teknologi dan kebutuhan keamanan di era digital.",
     "foto": "p08.jpg"
   },
@@ -121,7 +134,11 @@
     "koordinatTerverifikasi": false,
     "mapsUrl": "https://maps.app.goo.gl/dDpY1wMnQpY3De3B7",
     "deskripsi": "Gedung kuliah hasil renovasi perpustakaan lama yang memiliki 10 ruang kelas, coworking space, dan kantin.",
-    "ruangan": ["[Lt. 1: ruang …]", "[Lt. 2: ruang …]"],
+    "ruangan": [
+      "Lt. 1: K3.101 (120), K3.102 (100)",
+      "Lt. 2: K3.201, K3.202, K3.203, K3.204 — 100 orang/ruang",
+      "Lt. 3: K3.301, K3.302, K3.303, K3.304 — 100 orang/ruang"
+    ],
     "naskahAudio": "Selamat datang di Gedung Kuliah Umum tiga, salah satu fasilitas pendidikan yang menjadi bagian dari pengembangan Kampus ITB Jatinangor. Gedung ini merupakan hasil renovasi dan perubahan fungsi dari bangunan perpustakaan lama. Pengalihfungsian tersebut dilakukan untuk menambah ruang perkuliahan, terutama dalam mendukung kebutuhan mahasiswa tahun pertama. GKU tiga termasuk dalam rangkaian fasilitas baru yang diperkenalkan ITB pada November dua ribu dua puluh empat. Di dalamnya terdapat sepuluh ruang kelas yang dilengkapi pencahayaan dan perangkat audiovisual untuk menunjang kegiatan belajar mengajar. Tidak hanya ruang kelas, gedung ini juga menyediakan area coworking space dan kantin. Fasilitas tersebut memungkinkan mahasiswa untuk belajar secara mandiri, berdiskusi bersama teman, maupun beristirahat tanpa perlu berpindah lokasi terlalu jauh. Bersama GKU satu dan GKU dua, gedung ini melengkapi kawasan perkuliahan umum yang menjadi salah satu pusat kegiatan akademik mahasiswa di ITB Jatinangor.",
     "foto": "p09.jpg"
   },
@@ -135,7 +152,7 @@
     "koordinatTerverifikasi": false,
     "mapsUrl": "https://maps.app.goo.gl/xdcHgFG84FqQtuR97",
     "deskripsi": "Masjid utama ITB Jatinangor yang menjadi tempat ibadah sekaligus area beristirahat dan berdiskusi bagi mahasiswa.",
-    "ruangan": ["[Fasilitas 1]"],
+    "ruangan": [],
     "naskahAudio": "Selamat datang di Masjid Al-Jabbar, masjid utama yang berada di lingkungan Kampus ITB Jatinangor. Bangunan ini memiliki luas sekitar seribu enam ratus meter persegi dan tercatat secara khusus dalam dokumen hibah aset dari Pemerintah Provinsi Jawa Barat kepada ITB. Hal tersebut menunjukkan bahwa masjid ini menjadi salah satu fasilitas penting yang mendukung kehidupan kampus. Selain Masjid Al-Jabbar, terdapat pula Musala Al-Wasath dan musala di kawasan asrama. Dengan adanya beberapa tempat ibadah tersebut, mahasiswa dan sivitas akademika dapat menjalankan ibadah dengan lebih mudah dari berbagai area kampus. Di luar waktu salat, area pelataran masjid juga sering dimanfaatkan mahasiswa untuk beristirahat atau berdiskusi di sela-sela kegiatan perkuliahan. Apabila Anda sedang melintas ketika ibadah berlangsung, mohon tetap menjaga ketenangan dan kenyamanan pengguna masjid lainnya.",
     "foto": "p10.jpg"
   }
