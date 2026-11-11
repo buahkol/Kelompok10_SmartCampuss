@@ -91,7 +91,7 @@
   },
   {
     "id": "P07",
-    "nama": "Rektorat",
+    "nama": "Gedung Rektorat",
     "kategori": "gedung",
     "lat": -6.9260,
     "lng": 107.7700,
@@ -144,7 +144,7 @@
   },
   {
     "id": "P10",
-    "nama": "Masjid Aljabbar",
+    "nama": "Masjid Al-Jabbar",
     "kategori": "fasilitas",
     "lat": -6.9255,
     "lng": 107.7712,
