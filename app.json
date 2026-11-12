@@ -41,6 +41,13 @@
         {
           "locationWhenInUsePermission": "Menampilkan posisi Anda di peta kampus."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Izinkan Smart Campuss mengakses galeri foto untuk cek fasad gedung.",
+          "cameraPermission": "Izinkan Smart Campuss menggunakan kamera untuk mengambil foto fasad gedung."
+        }
       ]
     ],
     "experiments": {
