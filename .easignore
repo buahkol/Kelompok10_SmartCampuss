@@ -1,0 +1,24 @@
+# Git history
+.git/
+
+# Dependencies and local caches
+node_modules/
+.expo/
+.vscode/
+.claude/
+
+# Local build outputs and temporary files
+dist/
+web-build/
+coverage/
+*.log
+.DS_Store
+
+# Training dataset (exclude if this folder is only used to train the model,
+# not loaded by the mobile app at runtime)
+Folder Training ComVis/
+
+# Local environment files (configure required values in EAS Environment Variables)
+.env
+.env.*
+!.env.example
