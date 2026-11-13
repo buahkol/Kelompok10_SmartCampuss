@@ -262,79 +262,128 @@ export default function FasadScannerModal({
             {/* Hasil Prediksi */}
             {hasil && !loading && (
               <View style={styles.resultContainer}>
-                {/* Kartu Prediksi Teratas */}
-                <View style={styles.resultCard}>
-                  <Text style={styles.resultBadge}>GEDUNG TERDETEKSI</Text>
+                {!hasil.terverifikasi ? (
+                  /* FALLBACK: Keyakinan Model Rendah (< 50%) */
+                  <View style={styles.fallbackCard}>
+                    <Text style={styles.fallbackBadge}>FASAD KURANG JELAS</Text>
+                    <Text style={styles.fallbackTitle}>
+                      Gedung Belum Dapat Dipastikan
+                    </Text>
+                    <Text style={styles.fallbackText}>
+                      Model tidak dapat mengenali gedung dengan pasti. Foto mungkin buram, terhalang pohon/kendaraan, sudut pengambilan terlalu miring, atau pencahayaan kurang memadai.
+                    </Text>
 
-                  <Text style={styles.resultTitle}>
-                    {hasil.gedungUtama.label}
-                  </Text>
-
-                  {poiGedungUtama ? (
-                    <>
-                      <Text style={styles.resultCategory}>
-                        {poiGedungUtama.id} · {KATEGORI_LABEL[poiGedungUtama.kategori]}
-                      </Text>
-                      {fotoPoi && (
-                        <Image
-                          source={fotoPoi}
-                          style={styles.poiReferencePhoto}
-                          contentFit="cover"
-                        />
-                      )}
-                      <Text style={styles.resultDesc} numberOfLines={3}>
-                        {poiGedungUtama.deskripsi}
-                      </Text>
-
-                      <View style={styles.actionButtonGroup}>
+                    {poiGedungUtama && (
+                      <View style={styles.guessBox}>
+                        <Text style={styles.guessLabel}>Dugaan terdekat model:</Text>
+                        <Text style={styles.guessName}>{hasil.gedungUtama.label}</Text>
                         <Pressable
-                          style={styles.mapActionBtn}
+                          style={styles.guessActionBtn}
                           onPress={() => handleLihatDiPeta(hasil.gedungUtama)}
                         >
-                          <Text style={styles.mapActionBtnText}>
-                            Lihat di Peta
-                          </Text>
-                        </Pressable>
-
-                        <Pressable
-                          style={styles.audioActionBtn}
-                          onPress={() => handlePutarAudio(hasil.gedungUtama)}
-                        >
-                          <Text style={styles.audioActionBtnText}>
-                            Putar Narasi
+                          <Text style={styles.guessActionBtnText}>
+                            Periksa di Peta
                           </Text>
                         </Pressable>
                       </View>
-                    </>
-                  ) : (
-                    <Text style={styles.resultDesc}>
-                      Gedung terdeteksi oleh model klasifikasi, namun belum
-                      terdaftar dalam rincian POI lokal.
-                    </Text>
-                  )}
-                </View>
+                    )}
 
-                {/* Alternatif Prediksi (Tanpa Persentase) */}
-                {hasil.alternatif && hasil.alternatif.length > 0 && (
-                  <View style={styles.alternativesSection}>
-                    <Text style={styles.alternativesTitle}>
-                      Kemungkinan Gedung Lain:
-                    </Text>
-                    {hasil.alternatif.map((item, idx) => (
+                    <View style={styles.fallbackActionGroup}>
                       <Pressable
-                        key={idx}
-                        style={styles.altItem}
-                        onPress={() => {
-                          if (item.poi) handleLihatDiPeta(item);
-                        }}
+                        style={styles.primaryPickerBtn}
+                        onPress={handleAmbilKamera}
                       >
-                        <Text style={styles.altLabel}>{item.label}</Text>
-                        {item.poi && (
-                          <Text style={styles.altAction}>Lihat</Text>
-                        )}
+                        <Text style={styles.primaryPickerBtnText}>
+                          Ambil Foto Ulang
+                        </Text>
                       </Pressable>
-                    ))}
+                      <Pressable
+                        style={styles.secondaryPickerBtn}
+                        onPress={handlePilihGaleri}
+                      >
+                        <Text style={styles.secondaryPickerBtnText}>
+                          Pilih dari Galeri
+                        </Text>
+                      </Pressable>
+                    </View>
                   </View>
+                ) : (
+                  /* NORMAL: Keyakinan Cukup (>= 50%) */
+                  <>
+                    <View style={styles.resultCard}>
+                      <Text style={styles.resultBadge}>GEDUNG TERDETEKSI</Text>
+
+                      <Text style={styles.resultTitle}>
+                        {hasil.gedungUtama.label}
+                      </Text>
+
+                      {poiGedungUtama ? (
+                        <>
+                          <Text style={styles.resultCategory}>
+                            {poiGedungUtama.id} · {KATEGORI_LABEL[poiGedungUtama.kategori]}
+                          </Text>
+                          {fotoPoi && (
+                            <Image
+                              source={fotoPoi}
+                              style={styles.poiReferencePhoto}
+                              contentFit="cover"
+                            />
+                          )}
+                          <Text style={styles.resultDesc} numberOfLines={3}>
+                            {poiGedungUtama.deskripsi}
+                          </Text>
+
+                          <View style={styles.actionButtonGroup}>
+                            <Pressable
+                              style={styles.mapActionBtn}
+                              onPress={() => handleLihatDiPeta(hasil.gedungUtama)}
+                            >
+                              <Text style={styles.mapActionBtnText}>
+                                Lihat di Peta
+                              </Text>
+                            </Pressable>
+
+                            <Pressable
+                              style={styles.audioActionBtn}
+                              onPress={() => handlePutarAudio(hasil.gedungUtama)}
+                            >
+                              <Text style={styles.audioActionBtnText}>
+                                Putar Narasi
+                              </Text>
+                            </Pressable>
+                          </View>
+                        </>
+                      ) : (
+                        <Text style={styles.resultDesc}>
+                          Gedung terdeteksi oleh model klasifikasi, namun belum
+                          terdaftar dalam rincian POI lokal.
+                        </Text>
+                      )}
+                    </View>
+
+                    {/* Alternatif Prediksi (Tanpa Persentase) */}
+                    {hasil.alternatif && hasil.alternatif.length > 0 && (
+                      <View style={styles.alternativesSection}>
+                        <Text style={styles.alternativesTitle}>
+                          Kemungkinan Gedung Lain:
+                        </Text>
+                        {hasil.alternatif.map((item, idx) => (
+                          <Pressable
+                            key={idx}
+                            style={styles.altItem}
+                            onPress={() => {
+                              if (item.poi) handleLihatDiPeta(item);
+                            }}
+                          >
+                            <Text style={styles.altLabel}>{item.label}</Text>
+                            {item.poi && (
+                              <Text style={styles.altAction}>Lihat</Text>
+                            )}
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+                  </>
                 )}
               </View>
             )}
@@ -541,6 +590,87 @@ const styles = StyleSheet.create({
   resultContainer: {
     marginTop: 16,
     gap: 16,
+  },
+  fallbackCard: {
+    backgroundColor: "#FFFAF0",
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#FBD38D",
+  },
+  fallbackBadge: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#C05621",
+    letterSpacing: 0.8,
+  },
+  fallbackTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#7B341E",
+    marginTop: 6,
+  },
+  fallbackText: {
+    fontSize: 13,
+    color: "#7B341E",
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  guidanceBox: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#FEEBC8",
+  },
+  guidanceTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#2D3748",
+    marginBottom: 4,
+  },
+  guidanceItem: {
+    fontSize: 12,
+    color: "#4A5568",
+    lineHeight: 18,
+  },
+  guessBox: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  guessLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#718096",
+  },
+  guessName: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1A202C",
+    marginTop: 2,
+  },
+  guessActionBtn: {
+    backgroundColor: "#EDF2F7",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+  },
+  guessActionBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#2F6DB5",
+  },
+  fallbackActionGroup: {
+    marginTop: 14,
+    gap: 10,
   },
   resultCard: {
     backgroundColor: "#F0F4F8",

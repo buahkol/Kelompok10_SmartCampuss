@@ -11,7 +11,11 @@ export type PrediksiGedung = {
 export type HasilKlasifikasiFasad = {
   gedungUtama: PrediksiGedung;
   alternatif: PrediksiGedung[];
+  terverifikasi: boolean; // bernilai true jika confidence >= AMBANG_BATAS_KEYAKINAN
 };
+
+// Ambang batas keyakinan minimal model (50%) untuk memastikan fasad benar-benar teridentifikasi
+export const AMBANG_BATAS_KEYAKINAN = 0.5;
 
 // URL Space Hugging Face
 export const DEFAULT_FASAD_API_URL =
@@ -282,8 +286,12 @@ export async function klasifikasiFasadGedung(
     throw new Error("Model AI tidak mengembalikan prediksi yang valid.");
   }
 
+  const gedungUtama = list[0];
+  const terverifikasi = gedungUtama.confidence >= AMBANG_BATAS_KEYAKINAN;
+
   return {
-    gedungUtama: list[0],
+    gedungUtama,
     alternatif: list.slice(1, 4),
+    terverifikasi,
   };
 }
