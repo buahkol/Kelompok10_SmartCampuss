@@ -4,7 +4,7 @@
 import Svg, { Circle, Path, Rect } from "react-native-svg";
 
 export type ScIconName =
-  | "compass" | "grid" | "door" | "bookmark" | "camera" | "volume" | "chevron-left"
+  | "compass" | "grid" | "door" | "bookmark" | "camera" | "volume" | "chevron-left" | "arrow-left" | "x-circle" | "trash"
   | "search" | "arrow-up-right" | "walk" | "distance"
   | "plus" | "minus" | "locate" | "locate-fixed" | "swap" | "x" | "pin" | "headphones"
   | "turn-right" | "turn-left" | "arrow-up" | "flag"
@@ -16,6 +16,14 @@ export function ScIcon({ name, size = 22, color = "#0E201E", strokeWidth = 1.8, 
   const p = { stroke: color, strokeWidth, fill: "none", strokeLinecap: "round", strokeLinejoin: "round" } as const;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill={fill}>
+      {name === "trash" && <Path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 5v6m4-6v6" {...p} />}
+      {name === "arrow-left" && <Path d="M19 12H5m7-7-7 7 7 7" {...p} />}
+      {name === "x-circle" && (
+        <>
+          <Circle cx={12} cy={12} r={10} {...p} />
+          <Path d="m15 9-6 6m0-6 6 6" {...p} />
+        </>
+      )}
       {name === "compass" && (
         <>
           <Circle cx={12} cy={12} r={10} {...p} />

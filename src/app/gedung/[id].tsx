@@ -8,6 +8,7 @@ import { BuildingHero } from "../../components/sc/BuildingHero";
 import { ScIcon } from "../../components/sc/ScIcon";
 import { SectionHeader } from "../../components/sc/SectionHeader";
 import { FASILITAS, type FasilitasTipe } from "../../data/fasilitas";
+import { toggleFavorit, useFavorit } from "../../store/favorit";
 import { KATEGORI_LABEL, POIS, sudahDiisi } from "../../data/poi";
 import { useUserCoords } from "../../hooks/useUserCoords";
 import { font, sc, shadow } from "../../theme/sc";
@@ -22,10 +23,12 @@ export default function DetailGedung() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { coords } = useUserCoords();
-  const [tersimpan, setTersimpan] = useState(false);
   const [memutar, setMemutar] = useState(false);
+  const favorit = useFavorit();
 
   const poi = POIS.find((p) => p.id === id);
+  const tersimpan = poi ? favorit.ada(poi.id) : false;
+  const setTersimpan = () => poi && toggleFavorit(poi.id);
 
   // Narasi berhenti saat meninggalkan layar
   useEffect(() => () => hentikanNarasi(), []);
@@ -76,7 +79,7 @@ export default function DetailGedung() {
             <ScIcon name="chevron-left" size={22} color={sc.ink900} strokeWidth={2.2} />
           </Pressable>
           <Pressable
-            onPress={() => setTersimpan((v) => !v)}
+            onPress={() => setTersimpan()}
             accessibilityRole="button"
             accessibilityLabel={tersimpan ? "Hapus dari favorit" : "Simpan ke favorit"}
             style={[styles.roundBtn, shadow.xs, { top: atas, right: 24 }]}
@@ -188,7 +191,7 @@ export default function DetailGedung() {
               <Text style={styles.btnPrimerText}>Mulai Navigasi</Text>
             </Pressable>
             <Pressable
-              onPress={() => setTersimpan((v) => !v)}
+              onPress={() => setTersimpan()}
               accessibilityRole="button"
               style={styles.btnSekunder}
             >

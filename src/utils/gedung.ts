@@ -12,9 +12,9 @@ export const DAFTAR_GEDUNG = POIS.filter((p) => p.kategori !== "ikon");
 
 export function gedungTerdekat(
   dari: Koordinat,
-  opsi: { tipe?: FasilitasTipe; kecuali?: string; batas?: number } = {},
+  opsi: { tipe?: FasilitasTipe; kecuali?: string; batas?: number; semua?: boolean } = {},
 ): GedungJarak[] {
-  const hasil = DAFTAR_GEDUNG.filter((p) => p.id !== opsi.kecuali)
+  const hasil = (opsi.semua ? POIS : DAFTAR_GEDUNG).filter((p) => p.id !== opsi.kecuali)
     .map((poi) => ({ poi, info: infoGedung(poi.id), jarak: jarakMeter(dari, poi) }))
     .filter((g) => !opsi.tipe || opsi.tipe in g.info.fasilitas)
     .sort((a, b) => a.jarak - b.jarak);

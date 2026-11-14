@@ -1,5 +1,6 @@
 // Bilah navigasi bawah: Jelajahi · Fasilitas · [Kamera] · Ruangan · Favorit
 import type { BottomTabBarProps } from "expo-router/tabs";
+import { router } from "expo-router";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { font, sc, shadow } from "../../theme/sc";
@@ -7,15 +8,15 @@ import { ScIcon, type ScIconName } from "./ScIcon";
 
 export const NAV_HEIGHT = 92;
 
-type Item = { key: string; label: string; icon: ScIconName; route?: "index" | "fasilitas" };
+type Item = { key: string; label: string; icon: ScIconName; route?: "index" | "fasilitas" | "ruangan" | "favorit" };
 
 const KIRI: Item[] = [
   { key: "jelajahi", label: "Jelajahi", icon: "compass", route: "index" },
   { key: "fasilitas", label: "Fasilitas", icon: "grid", route: "fasilitas" },
 ];
 const KANAN: Item[] = [
-  { key: "ruangan", label: "Ruangan", icon: "door" },
-  { key: "favorit", label: "Favorit", icon: "bookmark" },
+  { key: "ruangan", label: "Ruangan", icon: "door", route: "ruangan" },
+  { key: "favorit", label: "Favorit", icon: "bookmark", route: "favorit" },
 ];
 
 const segera = (judul: string) =>
@@ -51,7 +52,7 @@ export function AppNav({ state, navigation }: BottomTabBarProps) {
         {KANAN.map(renderItem)}
       </View>
       <Pressable
-        onPress={() => segera("Pindai Gedung")}
+        onPress={() => router.push("/pindai-gedung")}
         accessibilityRole="button"
         accessibilityLabel="Pindai gedung dengan kamera"
         style={styles.camWrap}

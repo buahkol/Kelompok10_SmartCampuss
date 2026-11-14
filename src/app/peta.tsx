@@ -4,11 +4,13 @@
 // PB05 — Pop-up info POI: deskripsi, ruangan, dan jarak dari pengguna
 // PB06 — Narasi audio (TTS) diputar otomatis saat pemicu menyala
 // PB07 — Foto POI di kartu info
+// F08 — Cek Fasad Gedung AI (Klasifikasi foto bangunan via Hugging Face Spaces)
 import Mapbox from "@rnmapbox/maps";
 import { Image } from "expo-image";
 import * as Location from "expo-location";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import FasadScannerModal from "../components/FasadScannerModal";
 import { FOTO_POI, KATEGORI_LABEL, POIS, poiGeoJSON, sudahDiisi, type POI } from "../data/poi";
 import { jarakMeter, poiAktif, poiTerdekat } from "../utils/geofence";
 import { hentikanNarasi, putarNarasi } from "../utils/narasi";
@@ -27,6 +29,7 @@ export default function ExploreMap() {
   const [firstFixSec, setFirstFixSec] = useState<number | null>(null);
   const [selected, setSelected] = useState<POI | null>(null);
   const [nearby, setNearby] = useState<POI | null>(null); // POI yang radiusnya sedang dimasuki
+  const [scannerVisible, setScannerVisible] = useState(false);
 
   const cameraRef = useRef<Mapbox.Camera>(null);
   const subRef = useRef<Location.LocationSubscription | null>(null);
@@ -47,6 +50,15 @@ export default function ExploreMap() {
   function flyTo(c: Location.LocationObjectCoords) {
     cameraRef.current?.setCamera({
       centerCoordinate: [c.longitude, c.latitude],
+      zoomLevel: 17,
+      animationDuration: 800,
+    });
+  }
+
+  function onSelectPoiFromScanner(poi: POI) {
+    setSelected(poi);
+    cameraRef.current?.setCamera({
+      centerCoordinate: [poi.lng, poi.lat],
       zoomLevel: 17,
       animationDuration: 800,
     });
@@ -242,6 +254,14 @@ export default function ExploreMap() {
         </View>
       )}
 
+      {/* Tombol Cek Fasad Gedung AI */}
+      <Pressable
+        style={styles.scanButton}
+        onPress={() => setScannerVisible(true)}
+      >
+        <Text style={styles.scanButtonText}>Cek Fasad</Text>
+      </Pressable>
+
       {status === "granted" && coords && (
         <>
           <Pressable style={styles.myLocation} onPress={() => flyTo(coords)}>
@@ -290,6 +310,14 @@ export default function ExploreMap() {
           </Pressable>
         </View>
       )}
+
+      {/* Modal Cek Fasad Gedung AI */}
+      <FasadScannerModal
+        visible={scannerVisible}
+        onClose={() => setScannerVisible(false)}
+        onSelectPoi={onSelectPoiFromScanner}
+        onPlayNarasi={(poi) => putar(poi)}
+      />
     </View>
   );
 }
@@ -297,11 +325,39 @@ export default function ExploreMap() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
-  myLocation: {
-    position: "absolute", right: 16, bottom: 120,
-    width: 48, height: 48, borderRadius: 24,
-    backgroundColor: "#fff", alignItems: "center", justifyContent: "center",
+  scanButton: {
+    position: "absolute",
+    right: 16,
+    bottom: 176,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0F1E33",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 24,
+    gap: 6,
     elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  scanButtonText: { fontSize: 13, color: "#ffffff", fontWeight: "700" },
+  myLocation: {
+    position: "absolute",
+    right: 16,
+    bottom: 120,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
   myLocationText: { fontSize: 24, color: "#0F1E33" },
   debug: {
