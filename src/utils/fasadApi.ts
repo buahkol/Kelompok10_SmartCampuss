@@ -107,31 +107,41 @@ function parseGradioData(raw: any): PrediksiGedung[] {
   });
 }
 
-// Mengekstrak payload JSON dari respons Server-Sent Events (SSE) Gradio
+// Mengekstrak payload dari respons Server-Sent Events (SSE) Gradio.
+// Gradio mengirim `event: complete` + `data: [...]` bila sukses, atau `event: error` bila gagal.
 function ekstrakDataDariSSE(sseText: string): any {
-  const lines = sseText.split(/\r?\n/);
-  let lastDataLine = "";
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (line.startsWith("data:")) {
-      lastDataLine = line.replace(/^data:\s*/, "");
+  let event = "";
+  let data: any = null;
+  for (const baris of sseText.split(/\r?\n/)) {
+    const line = baris.trim();
+    if (line.startsWith("event:")) event = line.slice(6).trim();
+    else if (line.startsWith("data:")) {
+      try {
+        data = JSON.parse(line.slice(5).trim());
+      } catch {
+        data = null;
+      }
     }
   }
-
-  if (lastDataLine) {
-    try {
-      return JSON.parse(lastDataLine);
-    } catch {
-      // Abaikan error parse jika baris bukan JSON
-    }
+  if (event === "error") {
+    const detail = typeof data === "string" ? data : data?.message;
+    throw new Error(detail ? `Server model AI error: ${detail}` : "Server model AI gagal memproses gambar.");
   }
+  return data;
+}
 
-  // Jika tidak berformat data:, coba parse teks penuh
+async function fetchDenganBatasWaktu(url: string, init: RequestInit, ms: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
   try {
-    return JSON.parse(sseText);
-  } catch {
-    return null;
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (err) {
+    if (controller.signal.aborted) {
+      throw new Error("Server model AI tidak merespons. Space Hugging Face mungkin sedang booting, coba lagi sebentar.");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -142,145 +152,45 @@ export type InputKlasifikasiFasad = {
 };
 
 /**
- * Mengirim gambar fasad gedung ke API model Hugging Face Spaces.
+ * Mengirim gambar fasad gedung ke API model Hugging Face Spaces (Gradio 6, prefix `/gradio_api`).
+ * Gambar dikirim sebagai data URL base64 sehingga tidak perlu unggah multipart
+ * (`fetch` bawaan Expo tidak mendukung bagian FormData `{ uri, name, type }` ala React Native).
  */
 export async function klasifikasiFasadGedung(
   input: InputKlasifikasiFasad,
   customBaseUrl?: string
 ): Promise<HasilKlasifikasiFasad> {
   const baseUrl = (customBaseUrl || DEFAULT_FASAD_API_URL).replace(/\/+$/, "");
+  if (!input.base64) {
+    throw new Error("Data gambar (base64) tidak tersedia untuk dikirim ke model AI.");
+  }
   const mime = input.mimeType || "image/jpeg";
-  const dataUri = input.base64 ? `data:${mime};base64,${input.base64}` : null;
+  const dataUri = `data:${mime};base64,${input.base64}`;
 
-  let rawResult: any = null;
-  let lastError: any = null;
-
-  // Percobaan 1: Endpoint synchronous `/run/predict` atau `/api/predict` dengan Base64
-  if (dataUri) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
-
-      const res = await fetch(`${baseUrl}/run/predict`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ data: [dataUri] }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        const json = await res.json();
-        if (json?.data) {
-          rawResult = json.data;
-        }
-      }
-    } catch (err) {
-      lastError = err;
-    }
+  // 1. Antrekan prediksi → dapat event_id
+  const callRes = await fetchDenganBatasWaktu(
+    `${baseUrl}/gradio_api/call/predict`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        data: [{ url: dataUri, orig_name: "fasad_gedung.jpg", mime_type: mime, meta: { _type: "gradio.FileData" } }],
+      }),
+    },
+    30000
+  );
+  if (!callRes.ok) {
+    throw new Error(`Server model AI menolak permintaan (HTTP ${callRes.status}).`);
   }
+  const { event_id: eventId } = await callRes.json();
+  if (!eventId) throw new Error("Server model AI tidak mengembalikan event_id.");
 
-  // Percobaan 2: Unggah file ke `/upload` lalu panggil `/call/predict` (Gradio 4 / 5 standard)
-  if (!rawResult) {
-    try {
-      const formData = new FormData();
-      // Gunakan URI lokal file untuk React Native FormData
-      formData.append("files", {
-        uri: input.uri,
-        name: "fasad_gedung.jpg",
-        type: mime,
-      } as any);
-
-      const uploadController = new AbortController();
-      const uploadTimeout = setTimeout(() => uploadController.abort(), 25000);
-
-      const uploadRes = await fetch(`${baseUrl}/upload`, {
-        method: "POST",
-        body: formData,
-        signal: uploadController.signal,
-      });
-      clearTimeout(uploadTimeout);
-
-      if (uploadRes.ok) {
-        const uploadJson = await uploadRes.json();
-        const serverFilePath = Array.isArray(uploadJson) ? uploadJson[0] : uploadJson;
-
-        if (serverFilePath) {
-          // Panggil `/call/predict`
-          const callRes = await fetch(`${baseUrl}/call/predict`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              data: [
-                typeof serverFilePath === "string"
-                  ? { path: serverFilePath, meta: { _type: "gradio.FileData" } }
-                  : serverFilePath,
-              ],
-            }),
-          });
-
-          if (callRes.ok) {
-            const callJson = await callRes.json();
-            const eventId = callJson.event_id;
-
-            if (eventId) {
-              // Ambil hasil stream dari `/call/predict/{event_id}`
-              const eventRes = await fetch(`${baseUrl}/call/predict/${eventId}`);
-              const sseText = await eventRes.text();
-              const sseData = ekstrakDataDariSSE(sseText);
-              if (sseData) {
-                rawResult = sseData;
-              }
-            }
-          }
-        }
-      }
-    } catch (err) {
-      lastError = err;
-    }
+  // 2. Ambil hasil (stream SSE) — bisa lama bila Space baru bangun dari hibernasi
+  const eventRes = await fetchDenganBatasWaktu(`${baseUrl}/gradio_api/call/predict/${eventId}`, {}, 60000);
+  if (!eventRes.ok) {
+    throw new Error(`Gagal mengambil hasil prediksi (HTTP ${eventRes.status}).`);
   }
-
-  // Percobaan 3: Panggil `/call/predict` langsung dengan dataUri
-  if (!rawResult && dataUri) {
-    try {
-      const callRes = await fetch(`${baseUrl}/call/predict`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          data: [{ url: dataUri }],
-        }),
-      });
-
-      if (callRes.ok) {
-        const callJson = await callRes.json();
-        const eventId = callJson.event_id;
-        if (eventId) {
-          const eventRes = await fetch(`${baseUrl}/call/predict/${eventId}`);
-          const sseText = await eventRes.text();
-          const sseData = ekstrakDataDariSSE(sseText);
-          if (sseData) {
-            rawResult = sseData;
-          }
-        }
-      }
-    } catch (err) {
-      lastError = err;
-    }
-  }
-
-  if (!rawResult) {
-    const errorMsg =
-      lastError?.message ||
-      "Gagal menghubungi server model AI. Ruang Hugging Face mungkin sedang booting/hibernasi atau jaringan bermasalah.";
-    throw new Error(errorMsg);
-  }
-
-  const list = parseGradioData(rawResult);
+  const list = parseGradioData(ekstrakDataDariSSE(await eventRes.text()));
 
   if (list.length === 0) {
     throw new Error("Model AI tidak mengembalikan prediksi yang valid.");
