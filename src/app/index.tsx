@@ -4,16 +4,20 @@
 // PB05 — Pop-up info POI: deskripsi, ruangan, dan jarak dari pengguna
 // PB06 — Narasi audio (TTS) diputar otomatis saat pemicu menyala
 // PB07 — Foto POI di kartu info
+// PB04 — Notifikasi lokal saat masuk radius (UI02) · PB06 — jeda/lanjut narasi · F05 — pencarian
 // F08 — Cek Fasad Gedung AI (Klasifikasi foto bangunan via Hugging Face Spaces)
 import Mapbox from "@rnmapbox/maps";
 import { Image } from "expo-image";
 import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import FasadScannerModal from "../components/FasadScannerModal";
+import PencarianBar from "../components/PencarianBar";
 import { FOTO_POI, KATEGORI_LABEL, POIS, poiGeoJSON, sudahDiisi, type POI } from "../data/poi";
 import { jarakMeter, poiAktif, poiTerdekat } from "../utils/geofence";
-import { hentikanNarasi, putarNarasi } from "../utils/narasi";
+import { hentikanNarasi, jedaNarasi, lanjutNarasi, pasangPendengarNarasi, putarNarasi, type StatusNarasi } from "../utils/narasi";
+import { kirimNotifikasiPOI, siapkanNotifikasi } from "../utils/notifikasi";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "");
 
@@ -36,16 +40,12 @@ export default function ExploreMap() {
   const startRef = useRef(0);
   const hasCentered = useRef(false);
   const nearbyIdRef = useRef<string | null>(null);
-  const [speakingId, setSpeakingId] = useState<string | null>(null); // POI yang narasinya sedang diputar
+  const [narasi, setNarasi] = useState<{ id: string | null; status: StatusNarasi }>({
+    id: null,
+    status: "berhenti",
+  }); // POI yang narasinya sedang diputar/dijeda
 
-  function putar(poi: POI) {
-    putarNarasi(
-      poi,
-      () => setSpeakingId(poi.id),
-      // Narasi lama yang disela narasi baru tidak boleh menghapus status narasi baru
-      () => setSpeakingId((cur) => (cur === poi.id ? null : cur))
-    );
-  }
+  const putar = putarNarasi;
 
   function flyTo(c: Location.LocationObjectCoords) {
     cameraRef.current?.setCamera({
@@ -55,7 +55,8 @@ export default function ExploreMap() {
     });
   }
 
-  function onSelectPoiFromScanner(poi: POI) {
+  // Dipakai hasil pemindaian kamera, hasil pencarian, dan ketukan notifikasi
+  function pilihPOI(poi: POI) {
     setSelected(poi);
     cameraRef.current?.setCamera({
       centerCoordinate: [poi.lng, poi.lat],
@@ -79,6 +80,7 @@ export default function ExploreMap() {
       }
 
       setStatus("granted");
+      siapkanNotifikasi(); // minta izin notifikasi; hasilnya tidak menghalangi pelacakan lokasi
       startRef.current = Date.now(); // mulai hitung setelah izin diberikan
 
       const onLocation = (loc: Location.LocationObject) => {
@@ -98,6 +100,7 @@ export default function ExploreMap() {
           if (poi) {
             setSelected(poi); // tampilkan kartu info (PB05)
             putar(poi); // bacakan narasi (PB06)
+            kirimNotifikasiPOI(poi); // notifikasi sistem (UI02)
           } else {
             hentikanNarasi(); // keluar radius → narasi berhenti
           }
@@ -145,9 +148,24 @@ export default function ExploreMap() {
     };
   }, []);
 
+  useEffect(() => pasangPendengarNarasi((id, status) => setNarasi({ id, status })), []);
+
+  // Ketuk notifikasi → buka kartu POI-nya
+  const onNotifTap = useEffectEvent((poiId: unknown) => {
+    const poi = POIS.find((p) => p.id === poiId);
+    if (poi) pilihPOI(poi);
+  });
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener((r) =>
+      onNotifTap(r.notification.request.content.data?.poiId)
+    );
+    return () => sub.remove();
+  }, []);
+
   const terdekat = coords ? poiTerdekat(coords, POIS) : null;
   const ruangan = selected?.ruangan.filter(sudahDiisi) ?? [];
   const foto = selected?.foto ? FOTO_POI[selected.foto] : undefined;
+  const narasiPoiIni: StatusNarasi = selected && narasi.id === selected.id ? narasi.status : "berhenti";
 
   return (
     <View style={styles.container}>
@@ -199,6 +217,8 @@ export default function ExploreMap() {
         {status === "granted" && <Mapbox.LocationPuck pulsing={{ isEnabled: true }} />}
       </Mapbox.MapView>
 
+      <PencarianBar onPilih={pilihPOI} />
+
       {selected && (
         <View style={styles.poiCard}>
           {foto && (
@@ -235,16 +255,25 @@ export default function ExploreMap() {
             </>
           )}
           <View style={styles.poiActions}>
-            <Pressable
-              onPress={() => (speakingId === selected.id ? hentikanNarasi() : putar(selected))}
-            >
-              <Text style={styles.close}>
-                {speakingId === selected.id ? "Hentikan narasi" : "Putar narasi"}
-              </Text>
-            </Pressable>
+            {narasiPoiIni === "berhenti" ? (
+              <Pressable onPress={() => putar(selected)}>
+                <Text style={styles.close}>Putar narasi</Text>
+              </Pressable>
+            ) : (
+              <>
+                <Pressable onPress={narasiPoiIni === "memutar" ? jedaNarasi : lanjutNarasi}>
+                  <Text style={styles.close}>
+                    {narasiPoiIni === "memutar" ? "Jeda" : "Lanjutkan"}
+                  </Text>
+                </Pressable>
+                <Pressable onPress={hentikanNarasi}>
+                  <Text style={styles.close}>Hentikan</Text>
+                </Pressable>
+              </>
+            )}
             <Pressable
               onPress={() => {
-                if (speakingId === selected.id) hentikanNarasi();
+                if (narasiPoiIni !== "berhenti") hentikanNarasi();
                 setSelected(null);
               }}
             >
@@ -315,7 +344,7 @@ export default function ExploreMap() {
       <FasadScannerModal
         visible={scannerVisible}
         onClose={() => setScannerVisible(false)}
-        onSelectPoi={onSelectPoiFromScanner}
+        onSelectPoi={pilihPOI}
         onPlayNarasi={(poi) => putar(poi)}
       />
     </View>
@@ -377,7 +406,7 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: "#fff", fontWeight: "600" },
   poiCard: {
-    position: "absolute", left: 16, right: 16, top: 48,
+    position: "absolute", left: 16, right: 16, top: 104,
     backgroundColor: "#fff", borderRadius: 16, padding: 16, gap: 4, elevation: 6,
   },
   poiMeta: { fontSize: 12, fontWeight: "700", color: "#B8401C", letterSpacing: 1 },
