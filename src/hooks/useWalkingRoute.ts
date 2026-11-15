@@ -1,59 +1,80 @@
-// Rute jalan kaki dari Mapbox Directions. Selama permintaan belum selesai (atau gagal /
-// token tidak ada), dipakai rute garis lurus sebagai cadangan.
-import { useEffect, useEffectEvent, useMemo, useState } from "react";
+// PB10 — Rute jalan kaki di dalam ITB Jatinangor dari graf jalur pejalan kaki kampus
+// (OpenStreetMap + tambalan tim, lihat utils/ruteKampus.ts). Mapbox Directions tidak dipakai
+// karena selalu memutar lewat jalan kendaraan saat jalur teduh/lorong antargedung tidak
+// ada di datanya. Rute dihitung ulang otomatis bila pengguna menyimpang > SIMPANG_M.
+import { useEffect, useMemo, useState } from "react";
 import type { LngLat } from "../components/sc/CampusMap";
-import { bangunLangkah, kumulatif, ruteEstimasi, type Langkah, type MapboxStep } from "../utils/rute";
-
-const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN ?? "";
-
-type Hasil = { kunci: string; coords: LngLat[]; langkah: Langkah[]; total: number };
+import { SIMPANG_M, hitungRuteKampus, jarakKeRute, titikBelokan, type Belokan } from "../utils/ruteKampus";
+import { kumulatif, ruteEstimasi, type Aksi, type Langkah } from "../utils/rute";
 
 export type Rute = {
-  coords: LngLat[];
+  coords: LngLat[]; // seluruh lintasan, untuk progres & simpangan
+  jalur: LngLat[]; // bagian yang mengikuti jalur kampus — garis rute utama
+  akses: LngLat[][]; // potongan pendek di luar jalur (posisi → jalur, jalur → gedung) — putus-putus
   cum: number[];
   langkah: Langkah[];
   total: number;
-  akurat: boolean; // true = dari Mapbox, false = estimasi garis lurus
+  akurat: boolean; // true = mengikuti jalur kampus, false = estimasi garis lurus
+  tervalidasi: boolean; // seluruh segmen sudah divalidasi lapangan (PB13)
 };
 
 type Opsi = { asal: LngLat; tujuan: LngLat; namaTujuan: string; kunci: string };
 
-export function useWalkingRoute({ asal, tujuan, namaTujuan, kunci }: Opsi): Rute {
-  const [hasil, setHasil] = useState<Hasil | null>(null);
+function langkahBelokan(b: Belokan): { aksi: Aksi; teks: string } {
+  switch (b.arah) {
+    case "kiri": return { aksi: "kiri", teks: "Belok kiri" };
+    case "kanan": return { aksi: "kanan", teks: "Belok kanan" };
+    case "sedikit ke kiri": return { aksi: "kiri", teks: "Serong ke kiri" };
+    case "sedikit ke kanan": return { aksi: "kanan", teks: "Serong ke kanan" };
+    case "putar balik": return { aksi: "putar", teks: "Putar balik" };
+  }
+}
 
-  const ambil = useEffectEvent(async () => {
-    if (!TOKEN) return;
-    try {
-      const url =
-        `https://api.mapbox.com/directions/v5/mapbox/walking/${asal[0]},${asal[1]};${tujuan[0]},${tujuan[1]}` +
-        `?geometries=geojson&steps=true&overview=full&access_token=${TOKEN}`;
-      const res = await fetch(url);
-      if (!res.ok) return;
-      const json = await res.json();
-      const r = json.routes?.[0];
-      if (!r) return;
-      const steps = (r.legs?.[0]?.steps ?? []) as MapboxStep[];
-      setHasil({
-        kunci,
-        coords: r.geometry.coordinates as LngLat[],
-        langkah: bangunLangkah(steps, r.distance, namaTujuan),
-        total: r.distance,
-      });
-    } catch {
-      // tetap memakai estimasi
-    }
-  });
+function hitung(asal: LngLat, tujuan: LngLat, namaTujuan: string) {
+  const r = hitungRuteKampus({ lng: asal[0], lat: asal[1] }, { lng: tujuan[0], lat: tujuan[1] });
+  if (!r) {
+    const e = ruteEstimasi(asal, tujuan, namaTujuan);
+    return { ...e, jalur: [] as LngLat[], akses: [e.coords], akurat: false, tervalidasi: false };
+  }
+  const coords = r.koordinat as LngLat[];
+  const cum = kumulatif(coords);
+  // dariAwalM titikBelokan memakai proyeksi planar; ambil jarak kumulatif haversine
+  // di indeks yang sama supaya konsisten dengan progresRute
+  const langkah: Langkah[] = [
+    { teks: "Mulai berjalan", aksi: "mulai", mulaiM: 0, lokasi: coords[0] },
+    ...titikBelokan(r.koordinat).map((b) => ({ ...langkahBelokan(b), mulaiM: cum[b.indeks], lokasi: b.titik as LngLat })),
+    { teks: `Anda tiba di ${namaTujuan}`, aksi: "tiba", mulaiM: cum[cum.length - 1], lokasi: coords[coords.length - 1] },
+  ];
+  return {
+    coords,
+    jalur: r.jalur as LngLat[],
+    akses: r.akses as LngLat[][],
+    langkah,
+    total: cum[cum.length - 1],
+    akurat: true,
+    tervalidasi: r.tervalidasi,
+  };
+}
+
+export function useWalkingRoute({ asal, tujuan, namaTujuan, kunci }: Opsi): Rute {
+  // Titik awal rute dibekukan supaya rute tidak dihitung ulang di tiap pembaruan GPS;
+  // baru diganti saat sumber posisi berubah (kunci) atau pengguna menyimpang dari rute.
+  const [awal, setAwal] = useState<{ kunci: string; ll: LngLat }>({ kunci, ll: asal });
+  const titikAwal = awal.kunci === kunci ? awal.ll : asal;
+
+  const hasil = useMemo(() => hitung(titikAwal, tujuan, namaTujuan), [titikAwal, tujuan, namaTujuan]);
+
+  const simpangan = useMemo(
+    () => (hasil.coords.length > 1 ? jarakKeRute({ lng: asal[0], lat: asal[1] }, hasil.coords) : 0),
+    [asal, hasil.coords],
+  );
 
   useEffect(() => {
-    // setState terjadi setelah `await` di dalam ambil(), bukan sinkron di effect
+    // Sinkronisasi titik awal dengan posisi terbaru hanya saat kunci berganti atau menyimpang
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    ambil();
-  }, [kunci]);
+    if (awal.kunci !== kunci || simpangan > SIMPANG_M) setAwal({ kunci, ll: asal });
+  }, [kunci, simpangan, awal.kunci, asal]);
 
-  const estimasi = useMemo(() => ruteEstimasi(asal, tujuan, namaTujuan), [asal, tujuan, namaTujuan]);
-  const dipakai = hasil && hasil.kunci === kunci ? hasil : null;
-  const sumber = dipakai ?? estimasi;
-  const cum = useMemo(() => kumulatif(sumber.coords), [sumber.coords]);
-
-  return { ...sumber, cum, akurat: dipakai !== null };
+  const cum = useMemo(() => kumulatif(hasil.coords), [hasil.coords]);
+  return { ...hasil, cum };
 }
