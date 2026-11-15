@@ -15,7 +15,7 @@ import { font, sc, shadow } from "../../theme/sc";
 import { jarakMeter } from "../../utils/geofence";
 import { gedungTerdekat, infoGedung, ringkasanGedung } from "../../utils/gedung";
 import { menitJalan, perkiraanTiba, teksJarak } from "../../utils/jarak";
-import { hentikanNarasi, putarNarasi, teksNarasi } from "../../utils/narasi";
+import { hentikanNarasi, pasangPendengarNarasi, putarNarasi, teksNarasi } from "../../utils/narasi";
 
 const TOMBOL_BACK = 44;
 
@@ -29,6 +29,12 @@ export default function DetailGedung() {
   const poi = POIS.find((p) => p.id === id);
   const tersimpan = poi ? favorit.ada(poi.id) : false;
   const setTersimpan = () => poi && toggleFavorit(poi.id);
+
+  // Status tombol audio mengikuti narasi POI ini (jeda dianggap tidak memutar)
+  useEffect(
+    () => pasangPendengarNarasi((poiId, status) => setMemutar(poiId === id && status === "memutar")),
+    [id],
+  );
 
   // Narasi berhenti saat meninggalkan layar
   useEffect(() => () => hentikanNarasi(), []);
@@ -59,7 +65,7 @@ export default function DetailGedung() {
       hentikanNarasi();
       return;
     }
-    putarNarasi(poi, () => setMemutar(true), () => setMemutar(false));
+    putarNarasi(poi);
   };
 
   return (

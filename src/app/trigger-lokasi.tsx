@@ -1,6 +1,5 @@
 // 06 · Trigger Lokasi Otomatis — muncul sendiri saat pengguna masuk radius sebuah POI.
 // Peta digambar sebagai ilustrasi (seperti di Figma); jarak dihitung dari GPS bila ada.
-import * as Speech from "expo-speech";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useEffectEvent, useState } from "react";
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
@@ -14,7 +13,7 @@ import { useUserCoords } from "../hooks/useUserCoords";
 import { font, sc, shadow } from "../theme/sc";
 import { jarakMeter } from "../utils/geofence";
 import { menitJalan, perkiraanTiba, teksJarak } from "../utils/jarak";
-import { hentikanNarasi, putarNarasi } from "../utils/narasi";
+import { hentikanNarasi, pasangPendengarNarasi, putarNarasi } from "../utils/narasi";
 
 const W = 390;
 const H = 844;
@@ -33,7 +32,12 @@ export default function TriggerLokasiScreen() {
   const dalam = jarak <= poi.radiusM;
   const kutipan = dalam ? `Anda telah tiba di ${poi.nama}` : `${poi.nama}, ${teksJarak(jarak)} lagi`;
 
-  const putar = () => putarNarasi(poi, () => setBicara(true), () => setBicara(false));
+  useEffect(
+    () => pasangPendengarNarasi((poiId, status) => setBicara(poiId === poi.id && status === "memutar")),
+    [poi.id],
+  );
+
+  const putar = () => putarNarasi(poi);
   const mulai = useEffectEvent(() => {
     if (suara) putar();
   });
@@ -43,7 +47,8 @@ export default function TriggerLokasiScreen() {
   }, [poi.id]);
 
   const berhenti = () => {
-    Speech.stop();
+    // Lewat narasi.ts agar sesi narasi ikut direset, bukan hanya Speech.stop()
+    hentikanNarasi();
     if (router.canGoBack()) router.back();
     else router.replace("/");
   };
