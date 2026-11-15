@@ -18,6 +18,9 @@ import { menitJalan, perkiraanTiba, teksJarak } from "../../utils/jarak";
 import { hentikanNarasi, pasangPendengarNarasi, putarNarasi, teksNarasi } from "../../utils/narasi";
 
 const TOMBOL_BACK = 44;
+const TINGGI_TOMBOL = 56;
+// Tinggi footer tanpa safe area: padding atas 12 + tombol 56 + padding bawah 12
+const TINGGI_FOOTER = 12 + TINGGI_TOMBOL + 12;
 
 export default function DetailGedung() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -71,7 +74,7 @@ export default function DetailGedung() {
   return (
     <View style={styles.screen}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        contentContainerStyle={{ paddingBottom: TINGGI_FOOTER + insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
       >
         <View>
@@ -187,25 +190,34 @@ export default function DetailGedung() {
               </View>
             </View>
           )}
-
-          <View style={styles.actions}>
-            <Pressable
-              onPress={() => router.push({ pathname: "/navigasi", params: { id: poi.id } })}
-              accessibilityRole="button"
-              style={styles.btnPrimer}
-            >
-              <Text style={styles.btnPrimerText}>Mulai Navigasi</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setTersimpan()}
-              accessibilityRole="button"
-              style={styles.btnSekunder}
-            >
-              <Text style={styles.btnSekunderText}>{tersimpan ? "Tersimpan di Favorit" : "Simpan ke Favorit"}</Text>
-            </Pressable>
-          </View>
         </View>
       </ScrollView>
+
+      {/* Tombol aksi menempel di bawah layar supaya tidak perlu scroll untuk menemukannya */}
+      <View style={[styles.footer, shadow.xs, { paddingBottom: insets.bottom + 12 }]}>
+        <Pressable
+          onPress={() => setTersimpan()}
+          accessibilityRole="button"
+          accessibilityLabel={tersimpan ? "Hapus dari favorit" : "Simpan ke favorit"}
+          accessibilityState={{ selected: tersimpan }}
+          style={styles.btnFavorit}
+        >
+          <ScIcon
+            name="bookmark"
+            size={24}
+            color={sc.teal}
+            fill={tersimpan ? sc.teal : "none"}
+            strokeWidth={1.8}
+          />
+        </Pressable>
+        <Pressable
+          onPress={() => router.push({ pathname: "/navigasi", params: { id: poi.id } })}
+          accessibilityRole="button"
+          style={[styles.btnPrimer, styles.btnPrimerFooter]}
+        >
+          <Text style={styles.btnPrimerText}>Mulai Navigasi</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -260,9 +272,18 @@ const styles = StyleSheet.create({
   tileTitle: { fontFamily: font.semibold, fontSize: 13, lineHeight: 18, color: sc.ink700 },
   tileSub: { fontFamily: font.regular, fontSize: 12, lineHeight: 17, color: sc.ink500 },
   list: { gap: 12 },
-  actions: { gap: 10 },
+  footer: {
+    position: "absolute", left: 0, right: 0, bottom: 0,
+    flexDirection: "row", gap: 10, paddingHorizontal: 24, paddingTop: 12,
+    backgroundColor: "#FFFFFF", borderTopWidth: 1, borderTopColor: "rgba(0,0,0,0.06)",
+  },
+  btnFavorit: {
+    width: TINGGI_TOMBOL, height: TINGGI_TOMBOL, borderRadius: 18, backgroundColor: "#FFFFFF",
+    borderWidth: 1.5, borderColor: sc.teal, alignItems: "center", justifyContent: "center",
+  },
+  btnPrimerFooter: { flex: 1 },
   btnPrimer: {
-    height: 56, borderRadius: 18, backgroundColor: sc.teal, alignItems: "center", justifyContent: "center",
+    height: TINGGI_TOMBOL, borderRadius: 18, backgroundColor: sc.teal, alignItems: "center", justifyContent: "center",
   },
   btnPrimerText: { fontFamily: font.head, fontSize: 16, lineHeight: 20, letterSpacing: -0.16, color: "#FFFFFF" },
   btnSekunder: {
