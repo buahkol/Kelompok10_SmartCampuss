@@ -3,7 +3,7 @@ import Mapbox from "@rnmapbox/maps";
 import * as Speech from "expo-speech";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useEffectEvent, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { LngLat } from "../components/sc/CampusMap";
 import { MapPin } from "../components/sc/MapPin";
@@ -15,6 +15,7 @@ import { useWalkingRoute } from "../hooks/useWalkingRoute";
 import { font, sc, shadow } from "../theme/sc";
 import { menitJalan, perkiraanTiba, teksJarak } from "../utils/jarak";
 import { bulatkanMeter, progresRute, type Aksi } from "../utils/rute";
+import { ATRIBUSI_JALUR } from "../utils/ruteKampus";
 
 const IKON_AKSI: Record<Aksi, ScIconName> = {
   mulai: "arrow-up", lurus: "arrow-up", kiri: "turn-left", kanan: "turn-right", putar: "turn-left", tiba: "flag",
@@ -94,13 +95,22 @@ function Panduan({ tujuan, asal }: { tujuan: POI; asal?: POI }) {
   }, [dekat, idx]);
   useEffect(() => () => void Speech.stop(), []);
 
+  // Garis utama = bagian rute yang mengikuti jalur kampus; potongan di luar jalur digambar putus-putus
   const garis = useMemo(
     () => ({
       type: "Feature" as const,
       properties: {},
-      geometry: { type: "LineString" as const, coordinates: rute.coords },
+      geometry: { type: "LineString" as const, coordinates: rute.jalur.length > 1 ? rute.jalur : rute.coords },
     }),
-    [rute.coords],
+    [rute.jalur, rute.coords],
+  );
+  const garisAkses = useMemo(
+    () => ({
+      type: "Feature" as const,
+      properties: {},
+      geometry: { type: "MultiLineString" as const, coordinates: rute.jalur.length > 1 ? rute.akses : [] },
+    }),
+    [rute.jalur, rute.akses],
   );
 
   return (
@@ -113,6 +123,12 @@ function Panduan({ tujuan, asal }: { tujuan: POI; asal?: POI }) {
           animationDuration={700}
           padding={{ paddingTop: 140, paddingBottom: 340, paddingLeft: 0, paddingRight: 0 }}
         />
+        <Mapbox.ShapeSource id="sc-rute-akses" shape={garisAkses}>
+          <Mapbox.LineLayer
+            id="sc-rute-akses-garis"
+            style={{ lineColor: "#5FB5AC", lineWidth: 3, lineDasharray: [1, 1.5], lineCap: "round", lineOpacity: 0.95 }}
+          />
+        </Mapbox.ShapeSource>
         {rute.coords.length > 1 && (
           <Mapbox.ShapeSource id="sc-rute" shape={garis}>
             <Mapbox.LineLayer
@@ -130,6 +146,15 @@ function Panduan({ tujuan, asal }: { tujuan: POI; asal?: POI }) {
           </View>
         </Mapbox.MarkerView>
       </Mapbox.MapView>
+
+      {/* Atribusi wajib (ODbL) untuk data jalur pejalan kaki dari OpenStreetMap */}
+      <Text
+        style={[styles.atribusi, { top: insets.top + 132 }]}
+        onPress={() => Linking.openURL("https://www.openstreetmap.org/copyright")}
+        accessibilityRole="link"
+      >
+        {ATRIBUSI_JALUR}
+      </Text>
 
       <View style={[styles.instruksi, shadow.md, { top: insets.top + 8 }]}>
         <View style={styles.instruksiIkon}>
@@ -191,10 +216,12 @@ function Panduan({ tujuan, asal }: { tujuan: POI; asal?: POI }) {
           <WaveBars aktif={suara} />
         </Pressable>
 
-        {!rute.akurat && (
-          <Text style={styles.catatan}>
-            Rute berupa garis lurus (perkiraan). Rute jalan kaki memerlukan koneksi dan token Mapbox.
-          </Text>
+        {!rute.akurat ? (
+          <Text style={styles.catatan}>Rute berupa garis lurus (perkiraan) karena jalur kampus tidak ditemukan.</Text>
+        ) : (
+          !rute.tervalidasi && !tiba && (
+            <Text style={styles.catatan}>Jalur pejalan kaki belum divalidasi lapangan, tetap perhatikan sekitar.</Text>
+          )
         )}
 
         <Pressable onPress={berhenti} accessibilityRole="button" style={styles.btnBahaya}>
@@ -263,6 +290,10 @@ const styles = StyleSheet.create({
   suaraTeks: { flex: 1, minWidth: 0, gap: 2 },
   suaraJudul: { fontFamily: font.semibold, fontSize: 13, lineHeight: 18, color: sc.tealDeep },
   suaraKutipan: { fontFamily: font.regular, fontSize: 12, lineHeight: 17, color: sc.ink500 },
+  atribusi: {
+    position: "absolute", right: 24, fontFamily: font.regular, fontSize: 10, lineHeight: 14, color: sc.ink500,
+    backgroundColor: "rgba(255,255,255,0.85)", paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4,
+  },
   catatan: { fontFamily: font.regular, fontSize: 11, lineHeight: 16, color: sc.muted, marginTop: -6 },
   btnBahaya: {
     height: 56, borderRadius: 12, backgroundColor: sc.dangerSoft,

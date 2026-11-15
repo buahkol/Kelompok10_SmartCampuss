@@ -1,0 +1,238 @@
+{
+  "type": "FeatureCollection",
+  "properties": {
+    "keterangan": "Tambalan jalur oleh tim. Ujung garis otomatis menempel ke jalur terdekat (<= 10 m). Set tervalidasi: true setelah dicek lapangan (PB13); set ditutup: true untuk menonaktifkan jalur OSM yang salah dengan id yang sama tidak didukung — cukup buat jalur pengganti."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "m-001",
+        "jenis": "footway",
+        "sumber": "manual",
+        "tervalidasi": false,
+        "keterangan": "Jalur timur (sisi Jl. Lingkar Timur) putus 4 m dari jalan dekat Rektorat"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.7708494,
+            -6.9282754
+          ],
+          [
+            107.7708159,
+            -6.9282826
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "m-002",
+        "jenis": "footway",
+        "sumber": "manual",
+        "tervalidasi": false,
+        "keterangan": "Footway pendek dekat GKU 3 putus 10 m dari jalan"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.7701103,
+            -6.9270116
+          ],
+          [
+            107.7700427,
+            -6.9270742
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "m-003",
+        "jenis": "footway",
+        "sumber": "manual",
+        "tervalidasi": false,
+        "keterangan": "Footway pendek dekat KOICA putus 12 m dari jalan"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.7701687,
+            -6.9277459
+          ],
+          [
+            107.7702452,
+            -6.9276754
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "m-004",
+        "jenis": "footway",
+        "sumber": "manual",
+        "tervalidasi": false,
+        "keterangan": "Jalur utara (dekat lapangan sepak bola) putus 13 m dari jalan"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.7691033,
+            -6.924051
+          ],
+          [
+            107.7689961,
+            -6.9240979
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "m-lorong-1",
+        "jenis": "footway",
+        "sumber": "manual",
+        "tervalidasi": false,
+        "keterangan": "Lorong antara asrama 26–27 (peta Ditmawa: area perkerasan + jalur teduh antargedung)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.7687121,
+            -6.9264801
+          ],
+          [
+            107.7689414,
+            -6.9267437
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "m-lorong-2",
+        "jenis": "footway",
+        "sumber": "manual",
+        "tervalidasi": false,
+        "keterangan": "Lorong antara asrama 26–27 (peta Ditmawa: area perkerasan + jalur teduh antargedung)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.7687121,
+            -6.9264801
+          ],
+          [
+            107.7684244,
+            -6.9261493
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "m-lorong-3",
+        "jenis": "footway",
+        "sumber": "manual",
+        "tervalidasi": false,
+        "keterangan": "Lorong antara asrama 27–28 (peta Ditmawa: area perkerasan + jalur teduh antargedung)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.7685072,
+            -6.9266815
+          ],
+          [
+            107.768746,
+            -6.9269256
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "m-lorong-4",
+        "jenis": "footway",
+        "sumber": "manual",
+        "tervalidasi": false,
+        "keterangan": "Lorong antara asrama 27–28 (peta Ditmawa: area perkerasan + jalur teduh antargedung)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.7685072,
+            -6.9266815
+          ],
+          [
+            107.7681862,
+            -6.9263536
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "m-lorong-5",
+        "jenis": "footway",
+        "sumber": "manual",
+        "tervalidasi": false,
+        "keterangan": "Lorong antara asrama 28–29 (peta Ditmawa: area perkerasan + jalur teduh antargedung)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.7682717,
+            -6.9268604
+          ],
+          [
+            107.7685263,
+            -6.9271301
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "m-lorong-6",
+        "jenis": "footway",
+        "sumber": "manual",
+        "tervalidasi": false,
+        "keterangan": "Lorong antara asrama 28–29 (peta Ditmawa: area perkerasan + jalur teduh antargedung)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.7682717,
+            -6.9268604
+          ],
+          [
+            107.767969,
+            -6.9265399
+          ]
+        ]
+      }
+    }
+  ]
+}
