@@ -23,12 +23,14 @@ type Pendengar = (poiId: string | null, status: StatusNarasi) => void;
 
 let sesi: Sesi | null = null;
 let tokenTerakhir = 0;
-let pendengar: Pendengar = () => {};
+// Beberapa layar (peta, detail gedung, trigger lokasi) bisa mendengarkan sekaligus
+const daftarPendengar = new Set<Pendengar>();
+const pendengar: Pendengar = (poiId, status) => daftarPendengar.forEach((fn) => fn(poiId, status));
 
 export function pasangPendengarNarasi(fn: Pendengar) {
-  pendengar = fn;
+  daftarPendengar.add(fn);
   return () => {
-    if (pendengar === fn) pendengar = () => {};
+    daftarPendengar.delete(fn);
   };
 }
 
