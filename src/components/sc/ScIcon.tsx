@@ -8,7 +8,8 @@ export type ScIconName =
   | "search" | "arrow-up-right" | "walk" | "distance"
   | "plus" | "minus" | "locate" | "locate-fixed" | "swap" | "x" | "pin" | "headphones"
   | "turn-right" | "turn-left" | "arrow-up" | "flag"
-  | "toilet" | "kantin" | "cws" | "perpustakaan" | "musholla" | "laboratorium" | "ruang-kelas";
+  | "toilet" | "kantin" | "cws" | "perpustakaan" | "musholla" | "laboratorium" | "ruang-kelas"
+  | "auditorium" | "koperasi" | "atm";
 
 type Props = { name: ScIconName; size?: number; color?: string; strokeWidth?: number; fill?: string };
 
@@ -141,6 +142,24 @@ export function ScIcon({ name, size = 22, color = "#0E201E", strokeWidth = 1.8, 
         <>
           <Rect x={3} y={4} width={18} height={12} rx={1.5} {...p} />
           <Path d="M7 8.5h5M7 12h3M15 9h3M15 12h3M8 20l1-4M16 20l-1-4" {...p} />
+        </>
+      )}
+      {name === "auditorium" && (
+        <>
+          <Rect x={7} y={3} width={10} height={6} rx={1} {...p} />
+          <Path d="M3 14c3-1.3 6-2 9-2s6 .7 9 2M3 18c3-1.3 6-2 9-2s6 .7 9 2M3 21h18" {...p} />
+        </>
+      )}
+      {name === "koperasi" && (
+        <>
+          <Path d="M3 9 4.5 4h15L21 9M3 9h18M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" {...p} />
+          <Path d="M5 11.5V20h14v-8.5M10 20v-5h4v5" {...p} />
+        </>
+      )}
+      {name === "atm" && (
+        <>
+          <Rect x={2} y={5} width={20} height={14} rx={2} {...p} />
+          <Path d="M2 10h20M6 15h4" {...p} />
         </>
       )}
     </Svg>

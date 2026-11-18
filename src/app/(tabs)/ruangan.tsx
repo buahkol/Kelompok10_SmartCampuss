@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NAV_HEIGHT } from "../../components/sc/AppNav";
 import { PlaceCard } from "../../components/sc/PlaceCard";
 import { ScIcon } from "../../components/sc/ScIcon";
-import { RUANGAN } from "../../data/ruangan";
+import { RUANGAN, cocokRuangan } from "../../data/ruangan";
 import { useUserCoords } from "../../hooks/useUserCoords";
 import { font, sc } from "../../theme/sc";
 import { gedungTerdekat } from "../../utils/gedung";
@@ -21,7 +21,7 @@ export default function Ruangan() {
 
   const jarak = new Map(gedungTerdekat(coords).map((g) => [g.poi.id, g]));
   const hasil = kata
-    ? RUANGAN.filter((r) => r.nomor.includes(kata))
+    ? RUANGAN.filter((r) => cocokRuangan(r, kata))
         .map((r) => ({ r, g: jarak.get(r.gedungId) }))
         .flatMap((x) => (x.g ? [{ r: x.r, g: x.g }] : []))
         .sort((a, b) => a.g.jarak - b.g.jarak)
@@ -47,7 +47,8 @@ export default function Ruangan() {
               onChangeText={setQ}
               placeholder="Nomor ruangan"
               placeholderTextColor={sc.muted}
-              keyboardType="number-pad"
+              autoCapitalize="characters"
+              autoCorrect={false}
               returnKeyType="search"
               onSubmitEditing={Keyboard.dismiss}
               accessibilityLabel="Cari nomor ruangan"
@@ -59,7 +60,7 @@ export default function Ruangan() {
               </Pressable>
             )}
           </View>
-          <Text style={styles.note}>Cari pakai nomor ruangan saja, mis. 204 atau 401.</Text>
+          <Text style={styles.note}>Cari pakai kode ruangan, mis. K3.201, 9675, atau U 301.</Text>
           {kata !== "" && <Text style={styles.count}>{hasil.length} ruangan</Text>}
 
           <View style={styles.daftar}>

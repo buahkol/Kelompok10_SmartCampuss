@@ -1,12 +1,13 @@
 // Data fasilitas per gedung untuk layar Beranda, Detail Gedung, dan Fasilitas.
-// CATATAN: poi.json belum memuat fasilitas per gedung. Isi di bawah adalah
-// PLACEHOLDER (mengikuti contoh di Figma) — ganti dengan data resmi kampus.
+// Daftar fasilitas dari data tim; jumlah ruang kelas mengikuti Master Ruangan ITB
+// Jatinangor (lihat ruangan.ts). Jam buka masih PLACEHOLDER.
 import { FASILITAS_WARNA } from "../theme/sc";
 
 export type FasilitasTipe = keyof typeof FASILITAS_WARNA;
 
 export type IkonFasilitas =
-  | "toilet" | "kantin" | "cws" | "perpustakaan" | "musholla" | "laboratorium" | "ruang-kelas";
+  | "toilet" | "kantin" | "cws" | "perpustakaan" | "musholla" | "laboratorium" | "ruang-kelas"
+  | "auditorium" | "koperasi" | "atm";
 
 export const FASILITAS: Record<
   FasilitasTipe,
@@ -34,13 +35,17 @@ export const FASILITAS: Record<
     warna: FASILITAS_WARNA["ruang-kelas"],
     ikon: "ruang-kelas",
   },
+  auditorium: { label: "Auditorium", labelPendek: "Auditorium", warna: FASILITAS_WARNA.auditorium, ikon: "auditorium" },
+  koperasi: { label: "Koperasi", labelPendek: "Koperasi", warna: FASILITAS_WARNA.koperasi, ikon: "koperasi" },
+  atm: { label: "ATM Center", labelPendek: "ATM", warna: FASILITAS_WARNA.atm, ikon: "atm" },
 };
 
-// Susunan baris chip persis seperti di desain
+// Susunan baris chip: tiga baris pertama seperti di desain, baris terakhir fasilitas tambahan
 export const BARIS_CHIP: FasilitasTipe[][] = [
   ["toilet", "kantin", "cws"],
   ["perpustakaan", "musholla"],
   ["laboratorium", "ruang-kelas"],
+  ["auditorium", "koperasi", "atm"],
 ];
 
 export function isFasilitasTipe(v: unknown): v is FasilitasTipe {
@@ -51,65 +56,73 @@ export type InfoGedung = {
   ringkasan?: string; // baris kedua kartu gedung
   deskripsiSingkat?: string; // dipakai bila deskripsi di poi.json masih placeholder
   jam: string; // jam buka (placeholder)
-  fasilitas: Partial<Record<FasilitasTipe, string>>; // tipe → keterangan (mis. "5 ruang")
+  // tipe → keterangan (mis. "8 ruang"). Urutan penting: tiga pertama tampil sebagai chip ringkas.
+  fasilitas: Partial<Record<FasilitasTipe, string>>;
 };
 
 const JAM = "07.00–21.00";
+const ADA = "Tersedia";
 
+// P01 (Patung Transformer) dan P02 (GSG) tidak punya data fasilitas
 export const INFO_GEDUNG: Record<string, InfoGedung> = {
+  P02: {
+    ringkasan: "Gedung serbaguna · 600 orang",
+    jam: JAM,
+    fasilitas: {},
+  },
   P03: {
-    ringkasan: "Lab Komputer · Lab Riset",
-    deskripsiSingkat:
-      "Pusat laboratorium riset dan komputasi ITB Jatinangor, dengan ruang kelas dan area kerja bersama di lantai atas.",
-    jam: JAM,
-    fasilitas: {
-      laboratorium: "5 ruang",
-      "ruang-kelas": "8 ruang",
-      cws: "Lantai 4",
-      toilet: "Tiap lantai",
-      perpustakaan: "Lantai 2",
-      kantin: "Lantai 1",
-    },
-  },
-  P08: {
-    ringkasan: "Laboratorium sains",
-    jam: JAM,
-    fasilitas: { laboratorium: "3 ruang", "ruang-kelas": "4 ruang", toilet: "Tiap lantai" },
-  },
-  P09: {
     ringkasan: "Laboratorium terpadu",
     jam: JAM,
-    fasilitas: { laboratorium: "2 ruang", "ruang-kelas": "10 ruang", toilet: "Tiap lantai", perpustakaan: "Lantai 2" },
-  },
-  P05: {
-    ringkasan: "Ruang kuliah umum",
-    jam: JAM,
-    fasilitas: { "ruang-kelas": "12 ruang", toilet: "Tiap lantai", kantin: "Lantai 1" },
-  },
-  P06: {
-    ringkasan: "Ruang kuliah umum",
-    jam: JAM,
-    fasilitas: { "ruang-kelas": "10 ruang", toilet: "Tiap lantai" },
-  },
-  P02: {
-    ringkasan: "Gedung serba guna",
-    jam: JAM,
-    fasilitas: { "ruang-kelas": "6 ruang", toilet: "Tiap lantai", kantin: "Lantai 1" },
-  },
-  P07: {
-    ringkasan: "Layanan administrasi",
-    jam: "08.00–16.00",
-    fasilitas: { toilet: "Lantai 1", musholla: "Lantai 1", cws: "Lantai 2" },
+    fasilitas: { laboratorium: "Praktikum & riset", perpustakaan: ADA, musholla: ADA, toilet: ADA },
   },
   P04: {
     ringkasan: "Hunian mahasiswa",
     jam: "24 jam",
-    fasilitas: { kantin: "Lantai 1", musholla: "Lantai 1", cws: "Lantai 2" },
+    fasilitas: { kantin: ADA, koperasi: ADA, cws: ADA, musholla: ADA, toilet: ADA },
+  },
+  P05: {
+    ringkasan: "Ruang kuliah umum · 8 kelas",
+    jam: JAM,
+    fasilitas: { "ruang-kelas": "8 ruang", auditorium: "±500 orang", cws: ADA, musholla: ADA, toilet: ADA },
+  },
+  P06: {
+    ringkasan: "Ruang kuliah umum · Auditorium",
+    jam: JAM,
+    fasilitas: {
+      "ruang-kelas": "4 ruang",
+      auditorium: "Lt. 3 · 500 orang",
+      kantin: ADA,
+      atm: ADA,
+      musholla: ADA,
+      toilet: ADA,
+    },
+  },
+  P07: {
+    ringkasan: "Pusat administrasi",
+    jam: "08.00–16.00",
+    fasilitas: { "ruang-kelas": "10 ruang", laboratorium: "Lab komputer", musholla: ADA, toilet: ADA },
+  },
+  P08: {
+    ringkasan: "Riset keamanan siber",
+    jam: JAM,
+    fasilitas: {
+      laboratorium: "Lab komputer",
+      perpustakaan: ADA,
+      cws: ADA,
+      kantin: ADA,
+      musholla: ADA,
+      toilet: ADA,
+    },
+  },
+  P09: {
+    ringkasan: "Ruang kuliah umum · 10 kelas",
+    jam: JAM,
+    fasilitas: { "ruang-kelas": "10 ruang", cws: ADA, musholla: ADA, toilet: ADA },
   },
   P10: {
     ringkasan: "Tempat ibadah",
     jam: "24 jam",
-    fasilitas: { musholla: "Aula utama", toilet: "Lantai dasar" },
+    fasilitas: { toilet: ADA },
   },
 };
 

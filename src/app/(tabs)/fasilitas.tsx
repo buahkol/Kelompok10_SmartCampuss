@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   sub: { fontFamily: font.regular, fontSize: 13, lineHeight: 20, color: sc.ink500 },
   body: { paddingHorizontal: 24, gap: 22, paddingTop: 20 },
   chips: { gap: 14 },
-  chipRow: { flexDirection: "row", gap: 10 },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   hasil: { gap: 14 },
   hasilHead: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
   hasilTitle: { flex: 1, fontFamily: font.head, fontSize: 20, lineHeight: 26, color: sc.ink900 },
