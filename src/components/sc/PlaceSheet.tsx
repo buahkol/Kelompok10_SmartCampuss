@@ -14,6 +14,9 @@ const CHIP: Record<FasilitasTipe, { bg: string; dot: string }> = {
   kantin: { bg: "#FFF3D4", dot: "#E8A800" },
   perpustakaan: { bg: "#E6E1FF", dot: "#7A6AE0" },
   musholla: { bg: "#DDF7EA", dot: "#2FA36B" },
+  auditorium: { bg: "#FFE6DD", dot: "#C2502A" },
+  koperasi: { bg: "#E3F5F2", dot: "#0B7D75" },
+  atm: { bg: "#E6E1FF", dot: "#5B4BC4" },
 };
 
 type Props = {

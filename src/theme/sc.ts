@@ -74,4 +74,7 @@ export const FASILITAS_WARNA = {
   musholla: "#B4FFDA",
   laboratorium: "#E5E5E5",
   "ruang-kelas": "#F2FFB3",
+  auditorium: "#FFE6DD",
+  koperasi: "#E3F5F2",
+  atm: "#E6E1FF",
 } as const;
