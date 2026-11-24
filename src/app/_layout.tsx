@@ -12,8 +12,10 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AutoTrigger } from "../components/sc/AutoTrigger";
+import { IzinLokasi } from "../components/sc/IzinLokasi";
+import { Splash } from "../components/sc/Splash";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,6 +29,9 @@ export default function RootLayout() {
     PlusJakartaSans_700Bold,
   });
 
+  // Splash tampil di atas aplikasi sampai pengguna menekan "Mulai Jelajah"
+  const [masuk, setMasuk] = useState(false);
+
   useEffect(() => {
     if (loaded || error) SplashScreen.hideAsync();
   }, [loaded, error]);
@@ -35,8 +40,9 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style="dark" />
-      <AutoTrigger />
+      <StatusBar style={masuk ? "dark" : "light"} />
+      {masuk && <AutoTrigger />}
+      {masuk && <IzinLokasi />}
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="gedung/[id]" />
@@ -46,6 +52,7 @@ export default function RootLayout() {
         <Stack.Screen name="trigger-lokasi" />
         <Stack.Screen name="peta" options={{ headerShown: true, title: "Peta Kampus" }} />
       </Stack>
+      {!masuk && <Splash onMulai={() => setMasuk(true)} />}
     </>
   );
 }

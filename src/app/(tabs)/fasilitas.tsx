@@ -1,11 +1,12 @@
-// 07 · Fasilitas — pilih fasilitas, lihat gedung yang memilikinya dari yang terdekat
+// 07 · Fasilitas — pilih satu atau beberapa fasilitas (atau "Semua"), lihat gedung yang memilikinya dari yang terdekat
 import { router, useLocalSearchParams } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NAV_HEIGHT } from "../../components/sc/AppNav";
 import { BuildingCard } from "../../components/sc/BuildingCard";
 import { FacilityChip } from "../../components/sc/FacilityChip";
-import { BARIS_CHIP, FASILITAS, isFasilitasTipe } from "../../data/fasilitas";
+import { BARIS_CHIP, FASILITAS, isFasilitasTipe, type FasilitasTipe } from "../../data/fasilitas";
+import { ScIcon } from "../../components/sc/ScIcon";
 import { useUserCoords } from "../../hooks/useUserCoords";
 import { font, sc } from "../../theme/sc";
 import { gedungTerdekat, ringkasanGedung } from "../../utils/gedung";
@@ -13,9 +14,16 @@ import { gedungTerdekat, ringkasanGedung } from "../../utils/gedung";
 export default function Fasilitas() {
   const insets = useSafeAreaInsets();
   const { tipe: param } = useLocalSearchParams<{ tipe?: string }>();
-  const tipe = isFasilitasTipe(param) ? param : "laboratorium"; // sumber kebenaran: parameter rute
+  // Sumber kebenaran: parameter rute, daftar tipe dipisah koma. Kosong = "Semua".
+  const terpilih = (param ?? "").split(",").filter(isFasilitasTipe);
   const { coords } = useUserCoords();
-  const hasil = gedungTerdekat(coords, { tipe });
+  // Dengan beberapa fasilitas terpilih, hanya gedung yang memiliki semuanya yang tampil
+  const hasil = gedungTerdekat(coords).filter((g) => terpilih.every((t) => t in g.info.fasilitas));
+
+  const setTerpilih = (daftar: FasilitasTipe[]) => router.setParams({ tipe: daftar.join(",") });
+  const toggle = (t: FasilitasTipe) =>
+    setTerpilih(terpilih.includes(t) ? terpilih.filter((x) => x !== t) : [...terpilih, t]);
+  const judul = terpilih.length === 0 ? "Semua fasilitas" : terpilih.map((t) => FASILITAS[t].label).join(", ");
 
   return (
     <View style={styles.screen}>
@@ -25,11 +33,23 @@ export default function Fasilitas() {
       >
         <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) + 8 }]}>
           <Text accessibilityRole="header" style={styles.title}>Fasilitas</Text>
-          <Text style={styles.sub}>Temukan gedung sesuai kebutuhanmu.</Text>
+          <Text style={styles.sub}>Temukan fasilitas sesuai kebutuhanmu</Text>
         </View>
 
         <View style={styles.body}>
           <View style={styles.chips}>
+            <View style={styles.chipRow}>
+              <Pressable
+                onPress={() => setTerpilih([])}
+                accessibilityRole="button"
+                accessibilityState={{ selected: terpilih.length === 0 }}
+                accessibilityLabel="Semua fasilitas"
+                style={[styles.semua, { borderColor: terpilih.length === 0 ? sc.teal : "transparent" }]}
+              >
+                <ScIcon name="grid" size={18} color={sc.ink900} strokeWidth={1.7} />
+                <Text style={styles.semuaText}>Semua</Text>
+              </Pressable>
+            </View>
             {BARIS_CHIP.map((baris, i) => (
               <View key={i} style={styles.chipRow}>
                 {baris.map((t) => (
@@ -37,8 +57,8 @@ export default function Fasilitas() {
                     key={t}
                     tipe={t}
                     variant="filter"
-                    selected={t === tipe}
-                    onPress={() => router.setParams({ tipe: t })}
+                    selected={terpilih.includes(t)}
+                    onPress={() => toggle(t)}
                   />
                 ))}
               </View>
@@ -47,10 +67,16 @@ export default function Fasilitas() {
 
           <View style={styles.hasil}>
             <View style={styles.hasilHead}>
-              <Text accessibilityRole="header" style={styles.hasilTitle}>{FASILITAS[tipe].label}</Text>
+              <Text accessibilityRole="header" style={styles.hasilTitle}>{judul}</Text>
               <Text style={styles.count}>{hasil.length} gedung</Text>
             </View>
-            <Text style={styles.note}>Bangunan yang memiliki fasilitas ini, dari yang terdekat.</Text>
+            <Text style={styles.note}>
+              {terpilih.length === 0
+                ? "Semua gedung kampus terdekat"
+                : terpilih.length === 1
+                  ? "Bangunan terdekat yang memiliki fasilitas ini"
+                  : "Bangunan terdekat yang memiliki semua fasilitas terpilih"}
+            </Text>
             {hasil.map((g) => (
               <BuildingCard
                 key={g.poi.id}
@@ -76,6 +102,11 @@ const styles = StyleSheet.create({
   sub: { fontFamily: font.regular, fontSize: 13, lineHeight: 20, color: sc.ink500 },
   body: { paddingHorizontal: 24, gap: 22, paddingTop: 20 },
   chips: { gap: 14 },
+  semua: {
+    flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 10, paddingHorizontal: 14,
+    borderRadius: 16, borderWidth: 2, backgroundColor: sc.mint,
+  },
+  semuaText: { fontFamily: font.regular, fontSize: 12, lineHeight: 18, color: sc.ink900 },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   hasil: { gap: 14 },
   hasilHead: { flexDirection: "row", alignItems: "flex-start", gap: 8 },

@@ -1,10 +1,22 @@
-// Ilustrasi hero Detail Gedung (digambar ulang dari Figma "03 · Detail Gedung")
+// Hero Detail Gedung: foto POI bila ada, selain itu ilustrasi (digambar ulang dari Figma "03 · Detail Gedung")
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
 import Svg, { Circle, Rect } from "react-native-svg";
 import { sc } from "../../theme/sc";
 
-export function BuildingHero({ height = 260 }: { height?: number }) {
+type Props = { height?: number; foto?: number };
+
+export function BuildingHero({ height = 260, foto }: Props) {
+  if (foto) {
+    return (
+      <View style={{ height, overflow: "hidden", backgroundColor: sc.heroBottom }}>
+        <Image source={foto} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+        {/* Bayangan tipis di atas supaya tombol kembali tetap terbaca di foto terang */}
+        <LinearGradient colors={["rgba(0,0,0,0.35)", "rgba(0,0,0,0)"]} style={{ position: "absolute", left: 0, right: 0, top: 0, height: 110 }} />
+      </View>
+    );
+  }
   return (
     <View style={{ height, overflow: "hidden" }}>
       <LinearGradient colors={[sc.heroTop, sc.heroBottom]} style={StyleSheet.absoluteFill} />

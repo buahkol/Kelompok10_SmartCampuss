@@ -68,8 +68,8 @@ export default function Jelajahi() {
           style={[styles.header, { paddingTop: Math.max(insets.top, 20) + 8 }]}
         >
           <View style={styles.sapaan}>
-            <Text style={styles.overline}>MAU KE MANA HARI INI?</Text>
             <Text accessibilityRole="header" style={styles.h1}>ITB Jatinangor</Text>
+            <Text style={styles.overline}>MAU KE MANA HARI INI?</Text>
           </View>
 
           <View style={[styles.rute, shadow.card]}>
@@ -171,10 +171,10 @@ function Rail() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: sc.surface2 },
   header: {
-    paddingHorizontal: 24, paddingBottom: 24, gap: 18,
+    paddingHorizontal: 24, paddingBottom: 24, gap: 12,
     borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
   },
-  sapaan: { gap: 2 },
+  sapaan: { gap: 4 },
   overline: { fontFamily: font.semibold, fontSize: 10, lineHeight: 14, letterSpacing: 0.8, color: sc.overline },
   h1: { fontFamily: font.head, fontSize: 24, lineHeight: 30, color: "#FFFFFF" },
   rute: {

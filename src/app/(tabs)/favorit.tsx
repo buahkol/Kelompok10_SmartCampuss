@@ -24,7 +24,7 @@ export default function Favorit() {
       >
         <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) + 8 }]}>
           <Text accessibilityRole="header" style={styles.title}>Favorit</Text>
-          <Text style={styles.sub}>Tempat tersimpan, mudah ditemukan lagi.</Text>
+          <Text style={styles.sub}>Tempat tersimpan, mudah ditemukan kembali</Text>
         </View>
 
         <View style={styles.body}>
@@ -36,8 +36,8 @@ export default function Favorit() {
               </Text>
               <Text style={styles.sub2}>
                 {daftar.length === 0
-                  ? "Ketuk ikon penanda di Detail Gedung untuk menyimpan."
-                  : "Disimpan untuk kunjungan berikutnya."}
+                  ? "Ketuk ikon penanda di Detail Gedung untuk menyimpan tempat"
+                  : "Tersimpan untuk kunjunganmu berikutnya"}
               </Text>
             </View>
           </View>
