@@ -25,17 +25,17 @@ export function IzinLokasi() {
           judul={diblokir ? "Lokasi sedang dimatikan" : "Izinkan akses lokasi"}
           isi={
             diblokir
-              ? "Aktifkan izin lokasi di Pengaturan agar Smart Campuss bisa menampilkan posisimu di peta kampus."
+              ? "Aktifkan izin lokasi di Pengaturan agar Smart Campuss bisa menampilkan posisimu di peta kampus"
               : "Smart Campuss memakai lokasimu untuk membantu menjelajahi kampus ITB Jatinangor"
           }
           poin={
             diblokir
               ? ["Buka Pengaturan, pilih Izin, lalu Lokasi", "Pilih \"Izinkan saat aplikasi digunakan\""]
               : [
-                  "Menampilkan posisimu di peta secara real-time",
-                  "Memunculkan info dan narasi saat kamu dekat sebuah gedung",
-                  "Menghitung jarak dan rute jalan kaki",
-                  "Hanya dipakai saat aplikasi dibuka",
+                  "Menampilkan lokasimu secara real-time di peta",
+                  "Menampilkan informasi dan narasi saat kamu mendekati gedung",
+                  "Menghitung jarak dan rute jalan kaki menuju tujuanmu",
+                  "Lokasi hanya diakses saat aplikasi digunakan",
                 ]
           }
           utama={diblokir ? "Buka Pengaturan" : "Izinkan Lokasi"}

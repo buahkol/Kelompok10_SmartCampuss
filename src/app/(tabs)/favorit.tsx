@@ -62,10 +62,10 @@ export default function Favorit() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#F7FBFA" },
-  header: { paddingHorizontal: 24, paddingBottom: 20, gap: 6 },
+  header: { paddingHorizontal: 24, paddingBottom: 8, gap: 6 },
   title: { fontFamily: font.head, fontSize: 28, lineHeight: 34, color: sc.ink900 },
   sub: { fontFamily: font.regular, fontSize: 13, lineHeight: 20, color: sc.ink500 },
-  body: { paddingHorizontal: 24, paddingTop: 20, gap: 22 },
+  body: { paddingHorizontal: 24, paddingTop: 8, gap: 22 },
   ringkasan: {
     flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#EDFAF8",
     borderRadius: 18, paddingHorizontal: 16, paddingVertical: 14,

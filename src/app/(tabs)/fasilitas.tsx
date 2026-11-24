@@ -97,10 +97,10 @@ export default function Fasilitas() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#F7FBFA" },
-  header: { paddingHorizontal: 24, paddingBottom: 20, gap: 6 },
+  header: { paddingHorizontal: 24, paddingBottom: 8, gap: 6 },
   title: { fontFamily: font.head, fontSize: 28, lineHeight: 34, color: sc.ink900 },
   sub: { fontFamily: font.regular, fontSize: 13, lineHeight: 20, color: sc.ink500 },
-  body: { paddingHorizontal: 24, gap: 22, paddingTop: 20 },
+  body: { paddingHorizontal: 24, gap: 22, paddingTop: 8 },
   chips: { gap: 14 },
   semua: {
     flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 10, paddingHorizontal: 14,
