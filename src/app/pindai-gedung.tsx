@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
+  Linking,
   Pressable,
   StyleSheet,
   Text,
@@ -19,12 +20,13 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path, Rect } from "react-native-svg";
 import { FacilityChip } from "../components/sc/FacilityChip";
+import { IzinKartu } from "../components/sc/IzinKartu";
 import { PilihGedungModal } from "../components/sc/PilihGedungModal";
 import { IkonGedung, ScIcon } from "../components/sc/ScIcon";
 import type { FasilitasTipe } from "../data/fasilitas";
 import { POIS, type POI } from "../data/poi";
 import { useUserCoords } from "../hooks/useUserCoords";
-import { kenaliGedung, type FotoPindai, type KandidatGedung } from "../services/pengenalan";
+import { kenaliGedung, type FotoPindai } from "../services/pengenalan";
 import { font, sc } from "../theme/sc";
 import { gedungTerdekat, infoGedung } from "../utils/gedung";
 
@@ -50,7 +52,8 @@ type Fase =
   | { t: "tidak-yakin"; foto: FotoPindai | null; kandidat: Kandidat[] }
   | { t: "gagal"; foto: FotoPindai | null; pesan: string; detail?: string };
 
-const keKandidat = (daftar: KandidatGedung[]): Kandidat[] =>
+// Bentuk kandidat dari model (tanpa bergantung pada nama tipe yang diekspor services/pengenalan)
+const keKandidat = (daftar: { poiId: string; yakin: number }[]): Kandidat[] =>
   daftar.flatMap((k) => {
     const poi = POIS.find((p) => p.id === k.poiId);
     return poi ? [{ poi, yakin: Math.round(k.yakin) }] : [];
@@ -132,7 +135,17 @@ export default function PindaiGedungScreen() {
     try {
       const r = await kenaliGedung(f);
       if (id !== permintaan.current) return;
-      terimaHasil(f, r.status, keKandidat(r.status === "dikenali" ? [r] : r.kandidat));
+      // Dibaca longgar agar tidak bergantung pada bentuk tipe di services/pengenalan
+      const h = r as unknown as {
+        status?: string;
+        poiId?: string;
+        yakin?: number;
+        kandidat?: { poiId: string; yakin: number }[];
+      } | null;
+      if (!h) throw new Error("Server tidak mengembalikan hasil");
+      const dikenali = h.status === "dikenali";
+      const daftar = dikenali ? (h.poiId ? [{ poiId: h.poiId, yakin: h.yakin ?? 0 }] : []) : (h.kandidat ?? []);
+      terimaHasil(f, dikenali ? "dikenali" : "tidak-yakin", keKandidat(daftar));
     } catch (e) {
       if (id !== permintaan.current) return;
       setFase({
@@ -200,7 +213,7 @@ export default function PindaiGedungScreen() {
   const petunjuk = (() => {
     switch (fase.t) {
       case "bidik":
-        if (!kamera) return "Mode demo — izinkan kamera untuk memindai";
+        if (!kamera) return "Izinkan kamera untuk memindai";
         return siap ? "Posisikan fasad gedung di dalam bingkai" : "Menyiapkan kamera…";
       case "memotret":
         return "Memotret…";
@@ -251,13 +264,11 @@ export default function PindaiGedungScreen() {
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: "#FFFFFF", opacity: kilat }]} />
 
       <View style={[styles.header, { top: insets.top + 8 }]}>
-        <Pressable onPress={tutup} accessibilityRole="button" accessibilityLabel="Kembali" style={[styles.tombol, styles.tombolKaca]}>
+        <Pressable onPress={tutup} accessibilityRole="button" accessibilityLabel="Kembali" style={styles.tombol}>
           <ScIcon name="arrow-left" size={20} color="#FFFFFF" strokeWidth={2} />
         </Pressable>
         <Text style={styles.judul}>Pindai Gedung</Text>
-        <Pressable onPress={tutup} accessibilityRole="button" accessibilityLabel="Tutup" style={[styles.tombol, styles.tombolKuning]}>
-          <ScIcon name="x-circle" size={18} color={sc.yellow} strokeWidth={2} />
-        </Pressable>
+        <View style={styles.tombol} />
       </View>
 
       <View style={{ position: "absolute", left: fx, top: fy, width: fs, height: fs }} pointerEvents="none">
@@ -295,12 +306,6 @@ export default function PindaiGedungScreen() {
 
       {fase.t === "bidik" || fase.t === "memotret" ? (
         <View style={[styles.bilahRana, { paddingBottom: 28 + insets.bottom }]}>
-          {!kamera && izin?.canAskAgain !== false && (
-            <Pressable onPress={mintaIzin} accessibilityRole="button" style={styles.izin}>
-              <ScIcon name="camera" size={16} color={sc.tealDeep} />
-              <Text style={styles.izinText}>Izinkan kamera</Text>
-            </Pressable>
-          )}
           <Pressable
             onPress={potret}
             disabled={!bisaMemotret}
@@ -359,11 +364,28 @@ export default function PindaiGedungScreen() {
         </View>
       )}
 
+      {!kamera && izin && (
+        <View style={styles.izinLatar}>
+          <IzinKartu
+            ikon="camera"
+            judul="Izinkan akses kamera"
+            isi="Kamera dipakai untuk memotret fasad gedung agar Smart Campuss bisa mengenali nama gedungnya"
+            poin={[
+              "Foto hanya diambil saat kamu menekan tombol",
+              "Foto langsung dikirim ke sistem untuk mengenali gedung",
+              "Foto tidak disimpan di galeri perangkat",
+            ]}
+            utama={izin.canAskAgain ? "Izinkan Kamera" : "Buka Pengaturan"}
+            onUtama={() => (izin.canAskAgain ? void mintaIzin() : void Linking.openSettings())}
+          />
+        </View>
+      )}
+
       <PilihGedungModal
         visible={pilihManual}
         judul="Pilih gedung"
         onClose={() => setPilihManual(false)}
-        onPilih={(p) => {
+        onPilih={(p: POI | "me") => {
           setPilihManual(false);
           if (p !== "me") bukaDetail(p);
         }}
@@ -466,9 +488,7 @@ function LembarHasil({ fase, detik, saran, onBukaDetail }: LembarProps) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#103C45" },
   header: { position: "absolute", left: 0, right: 0, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 24 },
-  tombol: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center", borderWidth: 1 },
-  tombolKaca: { backgroundColor: "rgba(255,255,255,0.18)", borderColor: "rgba(255,255,255,0.2)" },
-  tombolKuning: { backgroundColor: "rgba(255,196,61,0.22)", borderColor: "rgba(255,196,61,0.4)" },
+  tombol: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   judul: {
     flex: 1, textAlign: "center", fontFamily: font.head, fontSize: 17, lineHeight: 23,
     letterSpacing: -0.255, color: "#FFFFFF",
@@ -508,11 +528,7 @@ const styles = StyleSheet.create({
   kandidatText: { fontFamily: font.semibold, fontSize: 13, lineHeight: 18, color: sc.ink800 },
   kandidatPersen: { fontFamily: font.bold, fontSize: 11, lineHeight: 15, color: sc.muted },
   tombolBaris: { flexDirection: "row", gap: 10 },
-  izin: {
-    flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: sc.mint,
-    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8,
-  },
-  izinText: { fontFamily: font.semibold, fontSize: 12, lineHeight: 16, color: sc.tealDeep },
+  izinLatar: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, backgroundColor: "rgba(8,42,49,0.72)", justifyContent: "flex-end" },
   btn: { flex: 1, height: 56, borderRadius: 12, alignItems: "center", justifyContent: "center", paddingHorizontal: 16 },
   btnSekunder: { backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: sc.teal },
   btnUtama: { backgroundColor: sc.tealDark },

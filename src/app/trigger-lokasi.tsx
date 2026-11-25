@@ -2,7 +2,7 @@
 // Peta digambar sebagai ilustrasi (seperti di Figma); jarak dihitung dari GPS bila ada.
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useEffectEvent, useState } from "react";
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Pressable, StyleSheet, Text, useWindowDimensions, Vibration, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Path, Rect } from "react-native-svg";
 import { MapPin } from "../components/sc/MapPin";
@@ -39,6 +39,8 @@ export default function TriggerLokasiScreen() {
 
   const putar = () => putarNarasi(poi);
   const mulai = useEffectEvent(() => {
+    // Getar tepat saat narasi dimulai supaya pengguna sadar sudah dekat, tanpa menatap layar
+    Vibration.vibrate([0, 250, 120, 250]);
     if (suara) putar();
   });
   useEffect(() => {

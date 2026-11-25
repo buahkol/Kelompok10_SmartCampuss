@@ -16,7 +16,7 @@ type Baris = [string, number, number, string?];
 
 const DATA: Record<string, Baris[]> = {
   // GSG: tercatat sebagai satu ruang
-  P02: [["GSG 1-7", 1, 600, "Ruang serbaguna"]],
+  P02: [["GSG 1-8", 1, 400, "Ruang serbaguna"]],
   // GKU 1: dikelola DKIJ
   P05: [
     ["K1.9675", 3, 100], ["K1.9676", 3, 100, "ber-AC"], ["K1.9677", 3, 100], ["K1.9678", 3, 100],
@@ -29,18 +29,18 @@ const DATA: Record<string, Baris[]> = {
   ],
   // Gedung Rektorat (Gedung Utama)
   P07: [
-    ["U 101", 1, 20], ["U 110", 1, 10], ["U 111", 1, 20],
+    ["U 101", 1, 10, "Ruang Rapat Multimedia"], ["U 109", 1, 55], ["U 110", 1, 5, "Ruang Studio"], ["U 111", 1, 40],
     ["U 202", 2, 20],
-    ["U 301", 3, 150], ["U 304", 3, 70], ["U 305", 3, 100], ["U 307", 3, 60], ["U 315", 3, 60], ["U 316", 3, 60],
+    ["U 301", 3, 150, "Ruang Seminar"], ["U 304", 3, 70, "Lab. Komputer"], ["U 305", 3, 100], ["U 307", 3, 70], ["U 313", 3, 70], ["U 315", 3, 60], ["U 316", 3, 55],
   ],
   // KOICA: dikelola STEI
   P08: [
-    ["Multipurpose", 1, 90, "Ruang serbaguna"],
-    ["Lecture 1", 2, 40], ["Lecture 2", 2, 40], ["Lecture 3", 2, 40], ["Lecture 4", 2, 40],
+    ["Multipurpose", 1, 70, "Ruang serbaguna"],
+    ["Lecture 1", 2, 40], ["Lecture 2", 2, 40], ["Lecture 3", 2, 50], ["Lecture 4", 2, 40],
   ],
   // GKU 3
   P09: [
-    ["K3.101", 1, 120], ["K3.102", 1, 100],
+    ["K3.101", 1, 140], ["K3.102", 1, 100],
     ["K3.201", 2, 100], ["K3.202", 2, 100], ["K3.203", 2, 100], ["K3.204", 2, 100],
     ["K3.301", 3, 100], ["K3.302", 3, 100], ["K3.303", 3, 100], ["K3.304", 3, 100],
   ],

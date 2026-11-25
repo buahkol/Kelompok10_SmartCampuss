@@ -6,12 +6,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NAV_HEIGHT } from "../../components/sc/AppNav";
 import { PlaceCard } from "../../components/sc/PlaceCard";
 import { ScIcon } from "../../components/sc/ScIcon";
-import { RUANGAN, cocokRuangan } from "../../data/ruangan";
+import { RUANGAN, type Ruangan as DataRuangan } from "../../data/ruangan";
 import { useUserCoords } from "../../hooks/useUserCoords";
 import { font, sc } from "../../theme/sc";
 import { gedungTerdekat } from "../../utils/gedung";
 
 const BATAS = 20;
+
+// Pencocokan nomor ruangan lokal: abaikan huruf besar/kecil, spasi, titik, dan tanda hubung
+const rapikan = (s: string) => s.toLowerCase().replace(/[\s.\-_]/g, "");
+const cocokRuangan = (r: DataRuangan, kata: string) => {
+  const k = rapikan(kata);
+  return k.length > 0 && rapikan(r.nomor).includes(k);
+};
 
 export default function Ruangan() {
   const insets = useSafeAreaInsets();
@@ -20,12 +27,11 @@ export default function Ruangan() {
   const kata = q.trim();
 
   const jarak = new Map(gedungTerdekat(coords).map((g) => [g.poi.id, g]));
-  const hasil = kata
-    ? RUANGAN.filter((r) => cocokRuangan(r, kata))
-        .map((r) => ({ r, g: jarak.get(r.gedungId) }))
-        .flatMap((x) => (x.g ? [{ r: x.r, g: x.g }] : []))
-        .sort((a, b) => a.g.jarak - b.g.jarak)
-    : [];
+  // Tanpa kata kunci, semua ruangan tampil dari gedung terdekat; mengetik menyaringnya
+  const hasil = (kata ? RUANGAN.filter((r) => cocokRuangan(r, kata)) : RUANGAN)
+    .map((r) => ({ r, g: jarak.get(r.gedungId) }))
+    .flatMap((x) => (x.g ? [{ r: x.r, g: x.g }] : []))
+    .sort((a, b) => a.g.jarak - b.g.jarak);
 
   return (
     <View style={styles.screen}>
@@ -36,7 +42,7 @@ export default function Ruangan() {
       >
         <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) + 8 }]}>
           <Text accessibilityRole="header" style={styles.title}>Ruangan</Text>
-          <Text style={styles.sub}>Nomor ruangan, gedung, dan lantainya.</Text>
+          <Text style={styles.sub}>Informasi ruangan, gedung, dan lantai</Text>
         </View>
 
         <View style={styles.body}>
@@ -45,7 +51,7 @@ export default function Ruangan() {
             <TextInput
               value={q}
               onChangeText={setQ}
-              placeholder="Nomor ruangan"
+              placeholder="Cari Ruangan"
               placeholderTextColor={sc.muted}
               autoCapitalize="characters"
               autoCorrect={false}
@@ -60,8 +66,6 @@ export default function Ruangan() {
               </Pressable>
             )}
           </View>
-          <Text style={styles.note}>Cari pakai kode ruangan, mis. K3.201, 9675, atau U 301.</Text>
-          {kata !== "" && <Text style={styles.count}>{hasil.length} ruangan</Text>}
 
           <View style={styles.daftar}>
             {hasil.slice(0, BATAS).map(({ r, g }) => (
@@ -87,7 +91,7 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 24, paddingBottom: 20, gap: 6 },
   title: { fontFamily: font.head, fontSize: 28, lineHeight: 34, color: sc.ink900 },
   sub: { fontFamily: font.regular, fontSize: 13, lineHeight: 20, color: sc.ink500 },
-  body: { paddingHorizontal: 24, paddingTop: 20, gap: 8 },
+  body: { paddingHorizontal: 24, paddingTop: 2, gap: 12 },
   input: {
     height: 52, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16,
     backgroundColor: sc.surface, borderWidth: 1.5, borderColor: sc.teal, borderRadius: 12,

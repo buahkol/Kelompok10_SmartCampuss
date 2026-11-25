@@ -15,6 +15,7 @@ export type LngLat = [number, number];
 export type CampusMapHandle = {
   zoomBy: (delta: number) => void;
   flyTo: (pusat: LngLat, zoom?: number) => void;
+  resetUtara: () => void;
 };
 
 type Props = {
@@ -23,6 +24,7 @@ type Props = {
   selectedId?: string | null;
   onSelect?: (id: string) => void;
   onMapPress?: () => void;
+  onHeading?: (derajat: number) => void;
   interactive?: boolean;
   showUser?: boolean;
   center: LngLat;
@@ -31,7 +33,7 @@ type Props = {
 };
 
 export function CampusMap({
-  ref, pois, selectedId = null, onSelect, onMapPress, interactive = true, showUser = false, center, zoom, style,
+  ref, pois, selectedId = null, onSelect, onMapPress, onHeading, interactive = true, showUser = false, center, zoom, style,
 }: Props) {
   const cameraRef = useRef<Mapbox.Camera>(null);
   const zoomRef = useRef(zoom);
@@ -43,6 +45,7 @@ export function CampusMap({
         zoomRef.current = Math.min(19, Math.max(13, zoomRef.current + delta));
         cameraRef.current?.setCamera({ zoomLevel: zoomRef.current, animationDuration: 300 });
       },
+      resetUtara: () => cameraRef.current?.setCamera({ heading: 0, animationDuration: 400 }),
       flyTo: (pusat, z) => {
         if (z !== undefined) zoomRef.current = z;
         cameraRef.current?.setCamera({
@@ -82,6 +85,7 @@ export function CampusMap({
       onPress={onMapPress}
       onCameraChanged={(s) => {
         zoomRef.current = s.properties.zoom;
+        onHeading?.(Math.round(s.properties.heading ?? 0));
       }}
     >
       <Mapbox.Camera ref={cameraRef} defaultSettings={{ centerCoordinate: center, zoomLevel: zoom }} />

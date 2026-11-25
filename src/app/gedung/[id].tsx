@@ -9,7 +9,7 @@ import { ScIcon } from "../../components/sc/ScIcon";
 import { SectionHeader } from "../../components/sc/SectionHeader";
 import { FASILITAS, type FasilitasTipe } from "../../data/fasilitas";
 import { toggleFavorit, useFavorit } from "../../store/favorit";
-import { KATEGORI_LABEL, POIS, sudahDiisi } from "../../data/poi";
+import { FOTO_POI, KATEGORI_LABEL, POIS, sudahDiisi } from "../../data/poi";
 import { useUserCoords } from "../../hooks/useUserCoords";
 import { font, sc, shadow } from "../../theme/sc";
 import { jarakMeter } from "../../utils/geofence";
@@ -60,6 +60,11 @@ export default function DetailGedung() {
     : (info.deskripsiSingkat ?? "Deskripsi belum tersedia.");
   const menitAudio = Math.max(1, Math.round(teksNarasi(poi).split(/\s+/).length / 150));
   const fasilitas = Object.entries(info.fasilitas) as [FasilitasTipe, string][];
+  const barisFasilitas = fasilitas.reduce<[FasilitasTipe, string][][]>((acc, f, i) => {
+    if (i % 2 === 0) acc.push([f]);
+    else acc[acc.length - 1].push(f);
+    return acc;
+  }, []);
   const terdekat = gedungTerdekat(coords, { kecuali: poi.id, batas: 3 });
   const atas = insets.top + 8;
 
@@ -78,7 +83,7 @@ export default function DetailGedung() {
         showsVerticalScrollIndicator={false}
       >
         <View>
-          <BuildingHero height={260 + Math.max(0, atas - 28)} />
+          <BuildingHero height={260 + Math.max(0, atas - 28)} foto={poi.foto ? FOTO_POI[poi.foto] : undefined} />
           <Pressable
             onPress={kembali}
             accessibilityRole="button"
@@ -86,20 +91,6 @@ export default function DetailGedung() {
             style={[styles.roundBtn, shadow.xs, { top: atas, left: 24 }]}
           >
             <ScIcon name="chevron-left" size={22} color={sc.ink900} strokeWidth={2.2} />
-          </Pressable>
-          <Pressable
-            onPress={() => setTersimpan()}
-            accessibilityRole="button"
-            accessibilityLabel={tersimpan ? "Hapus dari favorit" : "Simpan ke favorit"}
-            style={[styles.roundBtn, shadow.xs, { top: atas, right: 24 }]}
-          >
-            <ScIcon
-              name="bookmark"
-              size={24}
-              color={sc.teal}
-              fill={tersimpan ? sc.teal : "none"}
-              strokeWidth={1.8}
-            />
           </Pressable>
         </View>
 
@@ -153,22 +144,28 @@ export default function DetailGedung() {
 
           {fasilitas.length > 0 && (
             <View style={styles.section}>
-              <SectionHeader title="Fasilitas di gedung ini" />
+              <SectionHeader title="Fasilitas" />
+              {/* Dua kolom: tiap baris berisi dua kartu; kartu ganjil terakhir tetap selebar satu kolom */}
               <View style={styles.grid}>
-                {fasilitas.map(([tipe, ket]) => (
-                  <Pressable
-                    key={tipe}
-                    onPress={() => router.navigate({ pathname: "/fasilitas", params: { tipe } })}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${FASILITAS[tipe].labelPendek}, ${ket}`}
-                    style={[styles.tile, { backgroundColor: FASILITAS[tipe].warna }]}
-                  >
-                    <ScIcon name={FASILITAS[tipe].ikon} size={28} strokeWidth={1.6} />
-                    <View style={styles.tileText}>
-                      <Text numberOfLines={1} style={styles.tileTitle}>{FASILITAS[tipe].labelPendek}</Text>
-                      <Text numberOfLines={1} style={styles.tileSub}>{ket}</Text>
-                    </View>
-                  </Pressable>
+                {barisFasilitas.map((baris, i) => (
+                  <View key={i} style={styles.gridBaris}>
+                    {baris.map(([tipe, ket]) => (
+                      <Pressable
+                        key={tipe}
+                        onPress={() => router.navigate({ pathname: "/fasilitas", params: { tipe } })}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${FASILITAS[tipe].labelPendek}, ${ket}`}
+                        style={[styles.tile, { backgroundColor: FASILITAS[tipe].warna }]}
+                      >
+                        <ScIcon name={FASILITAS[tipe].ikon} size={28} strokeWidth={1.6} />
+                        <View style={styles.tileText}>
+                          <Text numberOfLines={1} style={styles.tileTitle}>{FASILITAS[tipe].labelPendek}</Text>
+                          <Text numberOfLines={1} style={styles.tileSub}>{ket}</Text>
+                        </View>
+                      </Pressable>
+                    ))}
+                    {baris.length === 1 && fasilitas.length > 1 && <View style={styles.tile} />}
+                  </View>
                 ))}
               </View>
             </View>
@@ -263,9 +260,10 @@ const styles = StyleSheet.create({
   audioTitle: { fontFamily: font.bold, fontSize: 15, lineHeight: 21, letterSpacing: -0.075, color: sc.yellowText },
   audioSub: { fontFamily: font.regular, fontSize: 12, lineHeight: 17, color: sc.yellowSub },
   section: { gap: 14 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  grid: { gap: 10 },
+  gridBaris: { flexDirection: "row", gap: 10 },
   tile: {
-    width: "48.5%", flexDirection: "row", alignItems: "center", gap: 10,
+    flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 10,
     paddingLeft: 12, paddingRight: 14, paddingVertical: 11, borderRadius: 16,
   },
   tileText: { flex: 1, minWidth: 0, gap: 1 },
