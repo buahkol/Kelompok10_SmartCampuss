@@ -1,5 +1,6 @@
 // 05 · Pindai Gedung — pratinjau kamera langsung; pengguna menekan tombol rana untuk memotret,
 // foto dikirim ke model pengenal fasad, dan status/hasilnya tampil di sheet bawah.
+// Izin kamera diminta lewat kartu "Izinkan / Tolak"; bila ditolak, muncul konfirmasi sebelum layar ditutup.
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -9,6 +10,7 @@ import {
   AccessibilityInfo,
   ActivityIndicator,
   Animated,
+  AppState,
   Easing,
   Linking,
   Pressable,
@@ -26,10 +28,9 @@ import { IkonGedung, ScIcon } from "../components/sc/ScIcon";
 import { WaveBars } from "../components/sc/WaveBars";
 import type { FasilitasTipe } from "../data/fasilitas";
 import { POIS, type POI } from "../data/poi";
-import { useUserCoords } from "../hooks/useUserCoords";
 import { kenaliGedung, type FotoPindai } from "../services/pengenalan";
 import { font, sc } from "../theme/sc";
-import { gedungTerdekat, infoGedung } from "../utils/gedung";
+import { infoGedung } from "../utils/gedung";
 import {
   hentikanNarasi,
   jedaNarasi,
@@ -43,14 +44,12 @@ import {
 const DETIK_SERVER_LAMBAT = 8;
 // AR03: setelah sekian kali berturut-turut kurang yakin, tampilkan saran pemotretan
 const SARAN_SETELAH = 2;
-const DURASI_DEMO_MS = 1400;
+// Permintaan izin yang dijawab lebih cepat dari ini berarti pop-up sistem tidak ditampilkan
+const BATAS_POPUP_MS = 500;
 
 const DESAIN_W = 390;
 const DESAIN_H = 844;
 const FRAME = 250;
-
-const JENDELA_X = [168, 210, 252];
-const JENDELA_Y = [290, 346, 402, 458];
 
 type Kandidat = { poi: POI; yakin: number };
 type Fase =
@@ -73,9 +72,12 @@ const umumkan = (teks: string) => AccessibilityInfo.announceForAccessibility(tek
 export default function PindaiGedungScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
-  const { coords } = useUserCoords();
-  const [izin, mintaIzin] = useCameraPermissions();
+  const [izin, mintaIzin, cekIzin] = useCameraPermissions();
   const kamera = izin?.granted === true;
+  // Kartu kelola izin yang dibuka manual dari tombol kamera di header
+  const [kelolaIzin, setKelolaIzin] = useState(false);
+  // Konfirmasi setelah pengguna menolak izin (di kartu izin maupun di dialog sistem)
+  const [ditolak, setDitolak] = useState(false);
   const kameraRef = useRef<CameraView>(null);
   const [siap, setSiap] = useState(false);
   const [lampuKilat, setLampuKilat] = useState(false);
@@ -89,15 +91,11 @@ export default function PindaiGedungScreen() {
   const [garis] = useState(() => new Animated.Value(0));
   const [kilat] = useState(() => new Animated.Value(0));
 
-  // Mode demo (tanpa izin kamera): gedung terdekat, tiap pemotretan pindah ke kandidat berikutnya
-  const kandidatDemo = gedungTerdekat(coords);
-  const [idxDemo, setIdxDemo] = useState(0);
-
   const s = width / DESAIN_W;
   const sibuk = fase.t === "memotret" || fase.t === "menganalisis";
   const detik = fase.t === "menganalisis" ? Math.max(0, Math.floor((sekarang - fase.mulai) / 1000)) : 0;
   const foto = "foto" in fase ? fase.foto : null;
-  const bisaMemotret = fase.t === "bidik" && (!kamera || siap);
+  const bisaMemotret = fase.t === "bidik" && kamera && siap;
   const poiDikenaliId = fase.t === "dikenali" ? fase.poi.id : null;
 
   // F08: pantau status narasi audio dan hentikan saat layar ditutup
@@ -108,6 +106,14 @@ export default function PindaiGedungScreen() {
     [poiDikenaliId],
   );
   useEffect(() => () => hentikanNarasi(), []);
+
+  // Izin bisa diubah dari Pengaturan sistem saat aplikasi di latar belakang: periksa ulang saat kembali
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (st) => {
+      if (st === "active") void cekIzin();
+    });
+    return () => sub.remove();
+  }, [cekIzin]);
 
   // Penghitung waktu tunggu selama analisis
   useEffect(() => {
@@ -181,24 +187,8 @@ export default function PindaiGedungScreen() {
     }
   };
 
-  const analisisDemo = () => {
-    const id = mulaiAnalisis(null);
-    const d = kandidatDemo[idxDemo % Math.max(1, kandidatDemo.length)];
-    const yakin = Math.max(60, 92 - (idxDemo % Math.max(1, kandidatDemo.length)) * 5);
-    setIdxDemo((i) => i + 1);
-    setTimeout(() => {
-      if (id !== permintaan.current) return;
-      terimaHasil(null, d ? "dikenali" : "tidak-yakin", d ? [{ poi: d.poi, yakin }] : []);
-    }, DURASI_DEMO_MS);
-  };
-
   const potret = async () => {
-    if (!bisaMemotret) return;
-    if (!kamera) {
-      analisisDemo();
-      return;
-    }
-    if (!kameraRef.current) return;
+    if (!bisaMemotret || !kameraRef.current) return;
     setFase({ t: "memotret" });
     kilat.setValue(0.85);
     Animated.timing(kilat, { toValue: 0, duration: 260, useNativeDriver: true }).start();
@@ -228,9 +218,40 @@ export default function PindaiGedungScreen() {
     if (foto) void analisis(foto);
   };
   const tutup = () => {
+    permintaan.current++;
     hentikanNarasi();
+    setKelolaIzin(false);
     if (router.canGoBack()) router.back();
     else router.replace("/");
+  };
+
+  // Selalu coba munculkan pop-up izin sistem lebih dulu, termasuk saat canAskAgain = false
+  // (Android juga melaporkan false bila dialog sekadar ditutup tanpa memilih).
+  // Hanya bila sistem benar-benar menolak tanpa menampilkan pop-up, arahkan ke Pengaturan.
+  const izinkan = async () => {
+    const sebelumnyaDiblokir = izin?.canAskAgain === false;
+    const mulai = Date.now();
+    const hasil = await mintaIzin();
+    if (hasil.granted) {
+      setDitolak(false);
+      umumkan("Kamera diizinkan");
+      return;
+    }
+    // Jawaban seketika = pop-up tidak sempat tampil (izin diblokir oleh sistem)
+    if (sebelumnyaDiblokir && !hasil.canAskAgain && Date.now() - mulai < BATAS_POPUP_MS) {
+      await Linking.openSettings();
+      return;
+    }
+    setDitolak(true);
+    umumkan("Izinkan kamera untuk menggunakan fitur pemindai gedung.");
+  };
+  const tolak = () => {
+    setDitolak(true);
+    umumkan("Izinkan kamera untuk menggunakan fitur pemindai gedung.");
+  };
+  const tetapTolak = () => {
+    umumkan("Kamera tidak diizinkan, kembali ke layar sebelumnya");
+    tutup();
   };
   const bukaDetail = (poi: POI) => {
     hentikanNarasi();
@@ -287,16 +308,6 @@ export default function PindaiGedungScreen() {
         preserveAspectRatio="xMidYMin slice"
         style={StyleSheet.absoluteFill}
       >
-        {!kamera && (
-          <>
-            <Rect x={34} y={320} width={120} height={310} rx={8} fill="rgba(12,48,56,0.7)" />
-            <Rect x={146} y={258} width={154} height={372} rx={8} fill="rgba(11,58,66,0.8)" />
-            <Rect x={292} y={382} width={94} height={248} rx={8} fill="rgba(12,48,56,0.65)" />
-            {JENDELA_Y.map((y) =>
-              JENDELA_X.map((x) => <Rect key={`${x}-${y}`} x={x} y={y} width={24} height={32} rx={4} fill="rgba(255,196,61,0.4)" />),
-            )}
-          </>
-        )}
         <Rect x={0} y={0} width={DESAIN_W} height={DESAIN_H} fill="rgba(8,42,49,0.32)" />
       </Svg>
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: "#FFFFFF", opacity: kilat }]} />
@@ -305,7 +316,19 @@ export default function PindaiGedungScreen() {
         <Pressable onPress={tutup} accessibilityRole="button" accessibilityLabel="Kembali" style={styles.tombol}>
           <ScIcon name="arrow-left" size={20} color="#FFFFFF" strokeWidth={2} />
         </Pressable>
+        {/* Penyeimbang tombol kelola izin di kanan agar judul tetap di tengah */}
+        {kamera && <View style={styles.tombol} />}
         <Text style={styles.judul}>Pindai Gedung</Text>
+        {kamera && (
+          <Pressable
+            onPress={() => setKelolaIzin(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Kelola izin kamera"
+            style={styles.tombol}
+          >
+            <ScIcon name="camera" size={20} color="#FFFFFF" strokeWidth={2} />
+          </Pressable>
+        )}
         {kamera ? (
           <Pressable
             onPress={() => setLampuKilat((v) => !v)}
@@ -424,21 +447,62 @@ export default function PindaiGedungScreen() {
         </View>
       )}
 
+      {/* Kartu izin: otomatis saat izin belum diberikan; setelah menolak, berganti menjadi konfirmasi */}
       {!kamera && izin && (
         <View style={styles.izinLatar}>
-          <IzinKartu
-            ikon="camera"
-            judul="Izinkan akses kamera"
-            isi="Kamera dipakai untuk memotret fasad gedung agar Smart Campuss bisa mengenali nama gedungnya"
-            poin={[
-              "Foto hanya diambil saat kamu menekan tombol",
-              "Foto langsung dikirim ke sistem untuk mengenali gedung",
-              "Foto tidak disimpan di galeri perangkat",
-            ]}
-            utama={izin.canAskAgain ? "Izinkan Kamera" : "Buka Pengaturan"}
-            onUtama={() => (izin.canAskAgain ? void mintaIzin() : void Linking.openSettings())}
-          />
+          {ditolak ? (
+            <IzinKartu
+              ikon="camera"
+              judul="Kamera dibutuhkan"
+              isi="Izinkan kamera untuk menggunakan fitur pemindai gedung"
+              poin={
+                izin.canAskAgain
+                  ? undefined
+                  : ["Izin kamera sudah ditolak sebelumnya", "Jika pop-up izin tidak muncul, kamu akan diarahkan ke Pengaturan"]
+              }
+              utama="Izinkan Kamera"
+              onUtama={() => void izinkan()}
+              kedua="Tetap Tolak"
+              onKedua={tetapTolak}
+            />
+          ) : (
+            <IzinKartu
+              ikon="camera"
+              judul="Izinkan akses kamera"
+              isi="Kamera dipakai untuk memotret fasad gedung agar Smart Campuss bisa mengenali nama gedungnya"
+              poin={[
+                "Foto hanya diambil saat kamu menekan tombol",
+                "Foto langsung dikirim ke sistem untuk mengenali gedung",
+                "Foto tidak disimpan di galeri perangkat",
+              ]}
+              utama="Izinkan Kamera"
+              onUtama={() => void izinkan()}
+              kedua="Tolak"
+              onKedua={tolak}
+            />
+          )}
         </View>
+      )}
+
+      {/* Kelola izin manual saat kamera sudah diizinkan: pencabutan izin hanya bisa lewat Pengaturan sistem */}
+      {kamera && kelolaIzin && (
+        <Pressable style={styles.izinLatar} onPress={() => setKelolaIzin(false)} accessibilityLabel="Tutup">
+          <Pressable>
+            <IzinKartu
+              ikon="camera"
+              judul="Kamera diizinkan"
+              isi="Smart Campuss sedang memakai kamera untuk memindai fasad gedung"
+              poin={[
+                "Untuk mencabut izin, buka Pengaturan, pilih Izin, lalu Kamera",
+                "Setelah izin dicabut, kamera otomatis dimatikan",
+              ]}
+              utama="Buka Pengaturan"
+              onUtama={() => void Linking.openSettings()}
+              kedua="Tutup"
+              onKedua={() => setKelolaIzin(false)}
+            />
+          </Pressable>
+        </Pressable>
       )}
 
       <PilihGedungModal
