@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NAV_HEIGHT } from "../../components/sc/AppNav";
 import { BuildingCard } from "../../components/sc/BuildingCard";
 import { FacilityChip } from "../../components/sc/FacilityChip";
+import { IzinBanner } from "../../components/sc/IzinBanner";
 import { BARIS_CHIP, FASILITAS, isFasilitasTipe, type FasilitasTipe } from "../../data/fasilitas";
 import { ScIcon } from "../../components/sc/ScIcon";
 import { useUserCoords } from "../../hooks/useUserCoords";
@@ -16,9 +17,12 @@ export default function Fasilitas() {
   const { tipe: param } = useLocalSearchParams<{ tipe?: string }>();
   // Sumber kebenaran: parameter rute, daftar tipe dipisah koma. Kosong = "Semua".
   const terpilih = (param ?? "").split(",").filter(isFasilitasTipe);
-  const { coords } = useUserCoords();
+  const { coords, izinDiberikan } = useUserCoords();
   // Dengan beberapa fasilitas terpilih, hanya gedung yang memiliki semuanya yang tampil
-  const hasil = gedungTerdekat(coords).filter((g) => terpilih.every((t) => t in g.info.fasilitas));
+  const cocok = gedungTerdekat(coords).filter((g) => terpilih.every((t) => t in g.info.fasilitas));
+  // UC-06 4a: tanpa izin lokasi daftar tetap tampil tanpa jarak, diurutkan sesuai abjad
+  const hasil = izinDiberikan ? cocok : [...cocok].sort((a, b) => a.poi.nama.localeCompare(b.poi.nama));
+  const dekat = izinDiberikan ? " terdekat" : "";
 
   const setTerpilih = (daftar: FasilitasTipe[]) => router.setParams({ tipe: daftar.join(",") });
   const toggle = (t: FasilitasTipe) =>
@@ -72,18 +76,19 @@ export default function Fasilitas() {
             </View>
             <Text style={styles.note}>
               {terpilih.length === 0
-                ? "Semua gedung kampus terdekat"
+                ? `Semua gedung kampus${dekat}`
                 : terpilih.length === 1
-                  ? "Bangunan terdekat yang memiliki fasilitas ini"
-                  : "Bangunan terdekat yang memiliki semua fasilitas terpilih"}
+                  ? `Bangunan${dekat} yang memiliki fasilitas ini`
+                  : `Bangunan${dekat} yang memiliki semua fasilitas terpilih`}
             </Text>
+            {!izinDiberikan && <IzinBanner teks="Urutan berdasarkan jarak memerlukan izin lokasi." />}
             {hasil.map((g) => (
               <BuildingCard
                 key={g.poi.id}
                 variant="fasilitas"
                 nama={g.poi.nama}
                 ringkasan={ringkasanGedung(g)}
-                jarakM={g.jarak}
+                jarakM={izinDiberikan ? g.jarak : undefined}
                 onPress={() => router.push({ pathname: "/gedung/[id]", params: { id: g.poi.id } })}
               />
             ))}

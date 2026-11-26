@@ -6,7 +6,7 @@ import { IkonGedung, ScIcon } from "./ScIcon";
 type Props = {
   nama: string;
   ringkasan: string;
-  jarakM: number;
+  jarakM?: number; // kosong bila posisi pengguna tidak tersedia (izin lokasi ditolak)
   onPress?: () => void;
   // "beranda": nama Plus Jakarta, angka besar + satuan kecil.
   // "fasilitas": nama Bricolage, angka seragam 18.
@@ -15,14 +15,14 @@ type Props = {
 };
 
 export function BuildingCard({ nama, ringkasan, jarakM, onPress, variant = "beranda" }: Props) {
-  const j = formatJarak(jarakM);
+  const j = jarakM === undefined ? null : formatJarak(jarakM);
   const split = variant === "beranda";
   const jelajah = variant === "jelajah";
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${nama}, ${j.angka} ${j.satuan}, ${menitJalan(jarakM)} menit jalan kaki`}
+      accessibilityLabel={j && jarakM !== undefined ? `${nama}, ${j.angka} ${j.satuan}, ${menitJalan(jarakM)} menit jalan kaki` : nama}
       style={({ pressed }) => [styles.card, shadow.sm, pressed && { opacity: 0.9 }]}
     >
       <View style={styles.top}>
@@ -41,23 +41,27 @@ export function BuildingCard({ nama, ringkasan, jarakM, onPress, variant = "bera
           <ScIcon name="arrow-up-right" size={15} color="#FFFFFF" strokeWidth={2.2} />
         </View>
       </View>
-      <View style={styles.divider} />
-      <View style={styles.meta}>
-        <View style={styles.metaItem}>
-          <ScIcon name="distance" size={16} color={sc.ink800} strokeWidth={1.8} />
-          <Text style={styles.metaValue}>
-            <Text style={split ? styles.big : jelajah ? styles.small : styles.flat}>{j.angka}</Text>
-            <Text style={split ? styles.unit : jelajah ? styles.small : styles.flat}>{` ${j.satuan}`}</Text>
-          </Text>
-        </View>
-        <View style={styles.metaItem}>
-          <ScIcon name="walk" size={24} color={sc.ink800} strokeWidth={1.7} />
-          <Text style={[styles.metaValue, !jelajah && { color: sc.ink500 }]}>
-            <Text style={split ? styles.big : jelajah ? styles.small : styles.flat}>{menitJalan(jarakM)}</Text>
-            <Text style={split ? styles.unit : jelajah ? styles.small : styles.flat}>{" mnt"}</Text>
-          </Text>
-        </View>
-      </View>
+      {j && jarakM !== undefined && (
+        <>
+          <View style={styles.divider} />
+          <View style={styles.meta}>
+            <View style={styles.metaItem}>
+              <ScIcon name="distance" size={16} color={sc.ink800} strokeWidth={1.8} />
+              <Text style={styles.metaValue}>
+                <Text style={split ? styles.big : jelajah ? styles.small : styles.flat}>{j.angka}</Text>
+                <Text style={split ? styles.unit : jelajah ? styles.small : styles.flat}>{` ${j.satuan}`}</Text>
+              </Text>
+            </View>
+            <View style={styles.metaItem}>
+              <ScIcon name="walk" size={24} color={sc.ink800} strokeWidth={1.7} />
+              <Text style={[styles.metaValue, !jelajah && { color: sc.ink500 }]}>
+                <Text style={split ? styles.big : jelajah ? styles.small : styles.flat}>{menitJalan(jarakM)}</Text>
+                <Text style={split ? styles.unit : jelajah ? styles.small : styles.flat}>{" mnt"}</Text>
+              </Text>
+            </View>
+          </View>
+        </>
+      )}
     </Pressable>
   );
 }
