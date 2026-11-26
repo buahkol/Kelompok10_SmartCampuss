@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NAV_HEIGHT } from "../../components/sc/AppNav";
+import { IzinBanner } from "../../components/sc/IzinBanner";
 import { PlaceCard } from "../../components/sc/PlaceCard";
 import { ScIcon } from "../../components/sc/ScIcon";
 import { RUANGAN, type Ruangan as DataRuangan } from "../../data/ruangan";
@@ -22,7 +23,7 @@ const cocokRuangan = (r: DataRuangan, kata: string) => {
 
 export default function Ruangan() {
   const insets = useSafeAreaInsets();
-  const { coords } = useUserCoords();
+  const { coords, izinDiberikan } = useUserCoords();
   const [q, setQ] = useState("");
   const kata = q.trim();
 
@@ -31,7 +32,12 @@ export default function Ruangan() {
   const hasil = (kata ? RUANGAN.filter((r) => cocokRuangan(r, kata)) : RUANGAN)
     .map((r) => ({ r, g: jarak.get(r.gedungId) }))
     .flatMap((x) => (x.g ? [{ r: x.r, g: x.g }] : []))
-    .sort((a, b) => a.g.jarak - b.g.jarak);
+    // Tanpa izin lokasi tidak ada urutan jarak; urut berdasarkan gedung lalu nomor ruangan
+    .sort((a, b) =>
+      izinDiberikan
+        ? a.g.jarak - b.g.jarak
+        : a.g.poi.nama.localeCompare(b.g.poi.nama) || a.r.nomor.localeCompare(b.r.nomor, undefined, { numeric: true }),
+    );
 
   return (
     <View style={styles.screen}>
@@ -67,13 +73,15 @@ export default function Ruangan() {
             )}
           </View>
 
+          {!izinDiberikan && <IzinBanner teks="Jarak dan urutan terdekat memerlukan izin lokasi." />}
+
           <View style={styles.daftar}>
             {hasil.slice(0, BATAS).map(({ r, g }) => (
               <PlaceCard
                 key={r.id}
                 nama={g.poi.nama}
                 deskripsi={r.keterangan}
-                jarakM={g.jarak}
+                jarakM={izinDiberikan ? g.jarak : undefined}
                 ruangan={r}
                 onPress={() => router.push({ pathname: "/gedung/[id]", params: { id: g.poi.id } })}
               />

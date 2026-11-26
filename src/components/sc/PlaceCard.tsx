@@ -7,19 +7,19 @@ import { IkonGedung, ScIcon } from "./ScIcon";
 type Props = {
   nama: string;
   deskripsi: string;
-  jarakM: number;
+  jarakM?: number; // kosong bila posisi pengguna tidak tersedia (izin lokasi ditolak)
   ruangan?: { nomor: string; lantai: number };
   onPress?: () => void;
   onHapus?: () => void;
 };
 
 export function PlaceCard({ nama, deskripsi, jarakM, ruangan, onPress, onHapus }: Props) {
-  const j = formatJarak(jarakM);
+  const j = jarakM === undefined ? null : formatJarak(jarakM);
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${ruangan ? `Ruang ${ruangan.nomor}, ` : ""}${nama}, ${j.angka} ${j.satuan}`}
+      accessibilityLabel={`${ruangan ? `Ruang ${ruangan.nomor}, ` : ""}${nama}${j ? `, ${j.angka} ${j.satuan}` : ""}`}
       style={({ pressed }) => [styles.card, pressed && { opacity: 0.9 }]}
     >
       {ruangan && (
@@ -42,17 +42,21 @@ export function PlaceCard({ nama, deskripsi, jarakM, ruangan, onPress, onHapus }
           <ScIcon name="arrow-up-right" size={15} color="#FFFFFF" strokeWidth={2.2} />
         </View>
       </View>
-      <View style={styles.divider} />
-      <View style={styles.meta}>
-        <View style={styles.metaItem}>
-          <ScIcon name="distance" size={16} color={sc.ink800} strokeWidth={1.8} />
-          <Text style={styles.metaText}>{`${j.angka} ${j.satuan}`}</Text>
-        </View>
-        <View style={styles.metaItem}>
-          <ScIcon name="walk" size={24} color={sc.ink800} strokeWidth={1.7} />
-          <Text style={styles.metaText}>{`${menitJalan(jarakM)} mnt`}</Text>
-        </View>
-      </View>
+      {j && jarakM !== undefined && (
+        <>
+          <View style={styles.divider} />
+          <View style={styles.meta}>
+            <View style={styles.metaItem}>
+              <ScIcon name="distance" size={16} color={sc.ink800} strokeWidth={1.8} />
+              <Text style={styles.metaText}>{`${j.angka} ${j.satuan}`}</Text>
+            </View>
+            <View style={styles.metaItem}>
+              <ScIcon name="walk" size={24} color={sc.ink800} strokeWidth={1.7} />
+              <Text style={styles.metaText}>{`${menitJalan(jarakM)} mnt`}</Text>
+            </View>
+          </View>
+        </>
+      )}
       {onHapus && (
         <Pressable onPress={onHapus} accessibilityRole="button" style={styles.hapus}>
           <ScIcon name="trash" size={16} color={sc.dangerText} strokeWidth={1.8} />

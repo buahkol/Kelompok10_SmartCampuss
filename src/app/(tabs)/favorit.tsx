@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NAV_HEIGHT } from "../../components/sc/AppNav";
+import { IzinBanner } from "../../components/sc/IzinBanner";
 import { PlaceCard } from "../../components/sc/PlaceCard";
 import { ScIcon } from "../../components/sc/ScIcon";
 import { useUserCoords } from "../../hooks/useUserCoords";
@@ -12,9 +13,11 @@ import { gedungTerdekat, ringkasanGedung } from "../../utils/gedung";
 
 export default function Favorit() {
   const insets = useSafeAreaInsets();
-  const { coords } = useUserCoords();
+  const { coords, izinDiberikan } = useUserCoords();
   const { ids } = useFavorit();
-  const daftar = gedungTerdekat(coords, { semua: true }).filter((g) => ids.includes(g.poi.id));
+  const tersimpan = gedungTerdekat(coords, { semua: true }).filter((g) => ids.includes(g.poi.id));
+  // Tanpa izin lokasi tidak ada urutan jarak; urut berdasarkan abjad
+  const daftar = izinDiberikan ? tersimpan : [...tersimpan].sort((a, b) => a.poi.nama.localeCompare(b.poi.nama));
 
   return (
     <View style={styles.screen}>
@@ -42,13 +45,15 @@ export default function Favorit() {
             </View>
           </View>
 
+          {!izinDiberikan && daftar.length > 0 && <IzinBanner teks="Jarak ke tempat tersimpan memerlukan izin lokasi." />}
+
           <View style={styles.daftar}>
             {daftar.map((g) => (
               <PlaceCard
                 key={g.poi.id}
                 nama={g.poi.nama}
                 deskripsi={ringkasanGedung(g)}
-                jarakM={g.jarak}
+                jarakM={izinDiberikan ? g.jarak : undefined}
                 onPress={() => router.push({ pathname: "/gedung/[id]", params: { id: g.poi.id } })}
                 onHapus={() => hapusFavorit(g.poi.id)}
               />
