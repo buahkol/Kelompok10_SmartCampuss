@@ -37,6 +37,17 @@ export async function mintaIzinLokasi() {
 
 export const tundaIzinLokasi = () => setLokasi("ditunda");
 
+// Dipanggil saat sebuah fitur butuh lokasi tapi izin belum ada: kartu izin ditampilkan lagi
+// walau sebelumnya pengguna memilih "Nanti saja" atau menolak (status "ditunda").
+export async function tampilkanKartuIzin() {
+  try {
+    const r = await Location.getForegroundPermissionsAsync();
+    setLokasi(r.granted ? "diberikan" : r.canAskAgain ? "tanya" : "diblokir");
+  } catch {
+    setLokasi("ditunda");
+  }
+}
+
 export function useIzinLokasi(): StatusIzin {
   return useSyncExternalStore(
     (cb) => {

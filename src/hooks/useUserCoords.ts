@@ -36,5 +36,7 @@ export function useUserCoords() {
     };
   }, [izin]);
 
-  return { coords: coords ?? TITIK_KAMPUS, live: coords !== null };
+  // coords tetap berisi titik kampus sebagai cadangan; layar yang menampilkan jarak ke pengguna
+  // harus memeriksa izinDiberikan, supaya tidak menampilkan jarak dari titik palsu itu.
+  return { coords: coords ?? TITIK_KAMPUS, live: coords !== null, izinDiberikan: izin === "diberikan" };
 }
