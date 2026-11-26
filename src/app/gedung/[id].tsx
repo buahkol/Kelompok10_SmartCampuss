@@ -12,6 +12,7 @@ import { toggleFavorit, useFavorit } from "../../store/favorit";
 import { FOTO_POI, KATEGORI_LABEL, POIS, sudahDiisi } from "../../data/poi";
 import { IzinBanner } from "../../components/sc/IzinBanner";
 import { useUserCoords } from "../../hooks/useUserCoords";
+import { tampilkanKartuIzin } from "../../store/izin";
 import { font, sc, shadow } from "../../theme/sc";
 import { jarakMeter } from "../../utils/geofence";
 import { gedungTerdekat, infoGedung, ringkasanGedung } from "../../utils/gedung";
@@ -215,7 +216,11 @@ export default function DetailGedung() {
           />
         </Pressable>
         <Pressable
-          onPress={() => router.push({ pathname: "/navigasi", params: { id: poi.id } })}
+          onPress={() => {
+            // Titik awal "Lokasi saya" butuh izin lokasi; tanpa izin, minta lagi lewat kartu izin
+            if (!izinDiberikan) void tampilkanKartuIzin();
+            else router.push({ pathname: "/navigasi", params: { id: poi.id } });
+          }}
           accessibilityRole="button"
           style={[styles.btnPrimer, styles.btnPrimerFooter]}
         >

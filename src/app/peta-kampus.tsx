@@ -11,6 +11,7 @@ import { PlaceSheet } from "../components/sc/PlaceSheet";
 import { ScIcon } from "../components/sc/ScIcon";
 import { POIS } from "../data/poi";
 import { useUserCoords } from "../hooks/useUserCoords";
+import { tampilkanKartuIzin } from "../store/izin";
 import { sc, shadow } from "../theme/sc";
 import { infoGedung } from "../utils/gedung";
 
@@ -19,7 +20,7 @@ const PUSAT: LngLat = [107.7697, -6.9275];
 export default function PetaKampus() {
   const { id, dari } = useLocalSearchParams<{ id?: string; dari?: string }>();
   const insets = useSafeAreaInsets();
-  const { coords, live } = useUserCoords();
+  const { coords, live, izinDiberikan } = useUserCoords();
   const peta = useRef<CampusMapHandle>(null);
   const awal = POIS.find((p) => p.id === id);
   const [pilihId, setPilihId] = useState<string | null>(awal?.id ?? null);
@@ -83,12 +84,17 @@ export default function PetaKampus() {
           bottomInset={insets.bottom}
           onClose={() => setPilihId(null)}
           onDetail={() => router.push({ pathname: "/gedung/[id]", params: { id: terpilih.id } })}
-          onRoute={() =>
+          onRoute={() => {
+            // Titik awal manual (dari) tidak butuh GPS; titik awal "Lokasi saya" butuh izin lokasi
+            if (!dari && !izinDiberikan) {
+              void tampilkanKartuIzin();
+              return;
+            }
             router.push({
               pathname: "/navigasi",
               params: { id: terpilih.id, ...(dari ? { dari } : {}) },
-            })
-          }
+            });
+          }}
         />
       )}
     </View>
