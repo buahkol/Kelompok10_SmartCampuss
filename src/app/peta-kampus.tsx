@@ -72,7 +72,10 @@ export default function PetaKampus() {
             icon="locate-fixed"
             label="Pusatkan ke lokasi saya"
             iconSize={18}
-            onPress={() => peta.current?.flyTo([coords.longitude, coords.latitude], 17)}
+            onPress={() => {
+              if (izinDiberikan) peta.current?.flyTo([coords.longitude, coords.latitude], 17);
+              else void tampilkanKartuIzin();
+            }}
           />
         </View>
       </View>
