@@ -17,7 +17,15 @@ import { font, sc, shadow } from "../../theme/sc";
 import { jarakMeter } from "../../utils/geofence";
 import { gedungTerdekat, infoGedung, ringkasanGedung } from "../../utils/gedung";
 import { menitJalan, perkiraanTiba, teksJarak } from "../../utils/jarak";
-import { hentikanNarasi, pasangPendengarNarasi, putarNarasi, teksNarasi } from "../../utils/narasi";
+import {
+  hentikanNarasi,
+  jedaNarasi,
+  lanjutNarasi,
+  pasangPendengarNarasi,
+  putarNarasi,
+  teksNarasi,
+  type StatusNarasi,
+} from "../../utils/narasi";
 
 const TOMBOL_BACK = 44;
 const TINGGI_TOMBOL = 56;
@@ -28,16 +36,16 @@ export default function DetailGedung() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { coords, izinDiberikan } = useUserCoords();
-  const [memutar, setMemutar] = useState(false);
+  const [narasi, setNarasi] = useState<StatusNarasi>("berhenti");
   const favorit = useFavorit();
 
   const poi = POIS.find((p) => p.id === id);
   const tersimpan = poi ? favorit.ada(poi.id) : false;
   const setTersimpan = () => poi && toggleFavorit(poi.id);
 
-  // Status tombol audio mengikuti narasi POI ini (jeda dianggap tidak memutar)
+  // Status tombol audio mengikuti narasi POI ini; narasi POI lain dianggap berhenti
   useEffect(
-    () => pasangPendengarNarasi((poiId, status) => setMemutar(poiId === id && status === "memutar")),
+    () => pasangPendengarNarasi((poiId, status) => setNarasi(poiId === id ? status : "berhenti")),
     [id],
   );
 
@@ -73,14 +81,6 @@ export default function DetailGedung() {
     { kecuali: poi.id, batas: 3 },
   );
   const atas = insets.top + 8;
-
-  const toggleAudio = () => {
-    if (memutar) {
-      hentikanNarasi();
-      return;
-    }
-    putarNarasi(poi);
-  };
 
   return (
     <View style={styles.screen}>
@@ -135,20 +135,43 @@ export default function DetailGedung() {
 
           {!izinDiberikan && <IzinBanner teks="Jarak dan perkiraan tiba memerlukan izin lokasi." />}
 
-          <Pressable
-            onPress={toggleAudio}
-            accessibilityRole="button"
-            accessibilityLabel={memutar ? "Hentikan narasi" : "Dengar cerita gedung ini"}
-            style={styles.audio}
-          >
-            <View style={styles.audioIcon}>
-              <ScIcon name="volume" size={24} color={sc.yellowText} strokeWidth={2} />
+          {narasi === "berhenti" ? (
+            <Pressable
+              onPress={() => putarNarasi(poi)}
+              accessibilityRole="button"
+              accessibilityLabel="Dengar cerita gedung ini"
+              style={styles.audio}
+            >
+              <View style={styles.audioIcon}>
+                <ScIcon name="volume" size={24} color={sc.yellowText} strokeWidth={2} />
+              </View>
+              <View style={styles.audioText}>
+                <Text style={styles.audioTitle}>Dengar cerita gedung ini</Text>
+                <Text style={styles.audioSub}>{menitAudio} menit</Text>
+              </View>
+            </Pressable>
+          ) : (
+            <View style={styles.audio}>
+              <View style={styles.audioIcon}>
+                <ScIcon name="volume" size={24} color={sc.yellowText} strokeWidth={2} />
+              </View>
+              <View style={styles.audioText}>
+                <Text style={styles.audioTitle}>{narasi === "memutar" ? "Sedang diputar" : "Dijeda"}</Text>
+                <Text style={styles.audioSub}>{menitAudio} menit</Text>
+              </View>
+              <Pressable
+                onPress={narasi === "memutar" ? jedaNarasi : lanjutNarasi}
+                accessibilityRole="button"
+                accessibilityLabel={narasi === "memutar" ? "Jeda narasi" : "Lanjutkan narasi"}
+                style={styles.audioTombol}
+              >
+                <ScIcon name={narasi === "memutar" ? "pause" : "play"} size={22} color={sc.yellowText} strokeWidth={2} />
+              </Pressable>
+              <Pressable onPress={hentikanNarasi} accessibilityRole="button" accessibilityLabel="Hentikan narasi" style={styles.audioTombol}>
+                <ScIcon name="stop" size={20} color={sc.yellowText} strokeWidth={2} />
+              </Pressable>
             </View>
-            <View style={styles.audioText}>
-              <Text style={styles.audioTitle}>{memutar ? "Sedang diputar · ketuk untuk berhenti" : "Dengar cerita gedung ini"}</Text>
-              <Text style={styles.audioSub}>{menitAudio} menit</Text>
-            </View>
-          </Pressable>
+          )}
 
           {fasilitas.length > 0 && (
             <View style={styles.section}>
@@ -269,6 +292,10 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   audioText: { flex: 1, minWidth: 0, gap: 3 },
+  audioTombol: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: sc.yellow,
+    alignItems: "center", justifyContent: "center",
+  },
   audioTitle: { fontFamily: font.bold, fontSize: 15, lineHeight: 21, letterSpacing: -0.075, color: sc.yellowText },
   audioSub: { fontFamily: font.regular, fontSize: 12, lineHeight: 17, color: sc.yellowSub },
   section: { gap: 14 },

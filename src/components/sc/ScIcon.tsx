@@ -6,6 +6,7 @@ import Svg, { Circle, Path, Rect } from "react-native-svg";
 export type ScIconName =
   | "compass" | "grid" | "door" | "bookmark" | "camera" | "volume" | "chevron-left" | "arrow-left" | "x-circle" | "trash"
   | "search" | "arrow-up-right" | "walk" | "distance"
+  | "pause" | "play" | "stop"
   | "plus" | "minus" | "locate" | "locate-fixed" | "swap" | "x" | "pin" | "headphones"
   | "turn-right" | "turn-left" | "arrow-up" | "flag"
   | "toilet" | "kantin" | "cws" | "perpustakaan" | "musholla" | "laboratorium" | "ruang-kelas"
@@ -52,6 +53,9 @@ export function ScIcon({ name, size = 22, color = "#0E201E", strokeWidth = 1.8, 
           <Circle cx={12} cy={13} r={3} {...p} />
         </>
       )}
+      {name === "pause" && <Path d="M8 5v14M16 5v14" {...p} />}
+      {name === "play" && <Path d="M7 4.5v15a.5.5 0 0 0 .76.43l12.4-7.5a.5.5 0 0 0 0-.86L7.76 4.07A.5.5 0 0 0 7 4.5z" {...p} />}
+      {name === "stop" && <Rect x={5} y={5} width={14} height={14} rx={2} {...p} />}
       {name === "volume" && (
         <>
           <Path d="M11 5 6 9H2v6h4l5 4z" {...p} />
