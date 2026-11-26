@@ -15,12 +15,15 @@ export type HasilKlasifikasiFasad = {
 };
 
 // Ambang batas keyakinan minimal model (50%) untuk memastikan fasad benar-benar teridentifikasi
-export const AMBANG_BATAS_KEYAKINAN = 0.5;
+export const AMBANG_BATAS_KEYAKINAN = 0.6;
 
 // URL Space Hugging Face
 export const DEFAULT_FASAD_API_URL =
   process.env.EXPO_PUBLIC_FASAD_API_URL ||
   "https://hakimgans-model-bangunan-itb-jatinangor.hf.space";
+
+// Token akses Hugging Face (opsional, untuk menghindari limit kuota ZeroGPU anonim)
+export const HF_TOKEN = process.env.EXPO_PUBLIC_HF_TOKEN;
 
 // Pemetaan 10 kelas model ke ID POI di poi.json
 export const KELAS_KE_POI_ID: Record<string, string> = {
@@ -167,12 +170,17 @@ export async function klasifikasiFasadGedung(
   const mime = input.mimeType || "image/jpeg";
   const dataUri = `data:${mime};base64,${input.base64}`;
 
+  const authHeaders: Record<string, string> = HF_TOKEN ? { Authorization: `Bearer ${HF_TOKEN}` } : {};
+
   // 1. Antrekan prediksi → dapat event_id
   const callRes = await fetchDenganBatasWaktu(
     `${baseUrl}/gradio_api/call/predict`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders,
+      },
       body: JSON.stringify({
         data: [{ url: dataUri, orig_name: "fasad_gedung.jpg", mime_type: mime, meta: { _type: "gradio.FileData" } }],
       }),
@@ -186,7 +194,11 @@ export async function klasifikasiFasadGedung(
   if (!eventId) throw new Error("Server model AI tidak mengembalikan event_id.");
 
   // 2. Ambil hasil (stream SSE) — bisa lama bila Space baru bangun dari hibernasi
-  const eventRes = await fetchDenganBatasWaktu(`${baseUrl}/gradio_api/call/predict/${eventId}`, {}, 60000);
+  const eventRes = await fetchDenganBatasWaktu(
+    `${baseUrl}/gradio_api/call/predict/${eventId}`,
+    { headers: authHeaders },
+    60000
+  );
   if (!eventRes.ok) {
     throw new Error(`Gagal mengambil hasil prediksi (HTTP ${eventRes.status}).`);
   }

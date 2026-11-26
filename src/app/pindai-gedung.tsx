@@ -23,12 +23,21 @@ import { FacilityChip } from "../components/sc/FacilityChip";
 import { IzinKartu } from "../components/sc/IzinKartu";
 import { PilihGedungModal } from "../components/sc/PilihGedungModal";
 import { IkonGedung, ScIcon } from "../components/sc/ScIcon";
+import { WaveBars } from "../components/sc/WaveBars";
 import type { FasilitasTipe } from "../data/fasilitas";
 import { POIS, type POI } from "../data/poi";
 import { useUserCoords } from "../hooks/useUserCoords";
 import { kenaliGedung, type FotoPindai } from "../services/pengenalan";
 import { font, sc } from "../theme/sc";
 import { gedungTerdekat, infoGedung } from "../utils/gedung";
+import {
+  hentikanNarasi,
+  jedaNarasi,
+  lanjutNarasi,
+  pasangPendengarNarasi,
+  putarNarasi,
+  type StatusNarasi,
+} from "../utils/narasi";
 
 // Setelah sekian detik tanpa jawaban, beri tahu bahwa Space Hugging Face mungkin sedang bangun
 const DETIK_SERVER_LAMBAT = 8;
@@ -69,7 +78,9 @@ export default function PindaiGedungScreen() {
   const kamera = izin?.granted === true;
   const kameraRef = useRef<CameraView>(null);
   const [siap, setSiap] = useState(false);
+  const [lampuKilat, setLampuKilat] = useState(false);
   const [fase, setFase] = useState<Fase>({ t: "bidik" });
+  const [statusNarasi, setStatusNarasi] = useState<StatusNarasi>("berhenti");
   const [sekarang, setSekarang] = useState(0);
   const [kurangYakinBeruntun, setKurangYakinBeruntun] = useState(0);
   const [pilihManual, setPilihManual] = useState(false);
@@ -87,6 +98,16 @@ export default function PindaiGedungScreen() {
   const detik = fase.t === "menganalisis" ? Math.max(0, Math.floor((sekarang - fase.mulai) / 1000)) : 0;
   const foto = "foto" in fase ? fase.foto : null;
   const bisaMemotret = fase.t === "bidik" && (!kamera || siap);
+  const poiDikenaliId = fase.t === "dikenali" ? fase.poi.id : null;
+
+  // F08: pantau status narasi audio dan hentikan saat layar ditutup
+  useEffect(
+    () => pasangPendengarNarasi((poiId, status) => {
+      setStatusNarasi(poiDikenaliId && poiId === poiDikenaliId ? status : "berhenti");
+    }),
+    [poiDikenaliId],
+  );
+  useEffect(() => () => hentikanNarasi(), []);
 
   // Penghitung waktu tunggu selama analisis
   useEffect(() => {
@@ -123,6 +144,8 @@ export default function PindaiGedungScreen() {
       setKurangYakinBeruntun(0);
       setFase({ t: "dikenali", foto: f, poi: utama.poi, yakin: utama.yakin });
       umumkan(`${utama.poi.nama} terdeteksi, keyakinan ${utama.yakin} persen`);
+      // F08: putar narasi audio otomatis saat gedung dikenali
+      putarNarasi(utama.poi);
       return;
     }
     setKurangYakinBeruntun((n) => n + 1);
@@ -195,16 +218,29 @@ export default function PindaiGedungScreen() {
     await analisis(hasilFoto);
   };
 
-  // Kembali ke mode membidik; membatalkan analisis yang sedang berjalan
+  // Kembali ke mode membidik; membatalkan analisis & menghentikan narasi yang sedang berjalan
   const fotoUlang = () => {
     permintaan.current++;
+    hentikanNarasi();
     setFase({ t: "bidik" });
   };
   const kirimUlang = () => {
     if (foto) void analisis(foto);
   };
-  const tutup = () => (router.canGoBack() ? router.back() : router.replace("/"));
-  const bukaDetail = (poi: POI) => router.push({ pathname: "/gedung/[id]", params: { id: poi.id } });
+  const tutup = () => {
+    hentikanNarasi();
+    if (router.canGoBack()) router.back();
+    else router.replace("/");
+  };
+  const bukaDetail = (poi: POI) => {
+    hentikanNarasi();
+    router.push({ pathname: "/gedung/[id]", params: { id: poi.id } });
+  };
+  const toggleNarasi = (poi: POI) => {
+    if (statusNarasi === "memutar") jedaNarasi();
+    else if (statusNarasi === "jeda") lanjutNarasi();
+    else putarNarasi(poi);
+  };
 
   const fx = 70 * s;
   const fy = 236 * s;
@@ -234,6 +270,8 @@ export default function PindaiGedungScreen() {
         <CameraView
           style={StyleSheet.absoluteFill}
           facing="back"
+          enableTorch={lampuKilat}
+          flash={lampuKilat ? "on" : "off"}
           ref={kameraRef}
           onCameraReady={() => setSiap(true)}
         />
@@ -268,7 +306,27 @@ export default function PindaiGedungScreen() {
           <ScIcon name="arrow-left" size={20} color="#FFFFFF" strokeWidth={2} />
         </Pressable>
         <Text style={styles.judul}>Pindai Gedung</Text>
-        <View style={styles.tombol} />
+        {kamera ? (
+          <Pressable
+            onPress={() => setLampuKilat((v) => !v)}
+            accessibilityRole="button"
+            accessibilityLabel={lampuKilat ? "Matikan lampu kilat" : "Nyalakan lampu kilat"}
+            accessibilityState={{ selected: lampuKilat }}
+            style={[styles.tombol, lampuKilat && styles.tombolAktif]}
+          >
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill={lampuKilat ? sc.yellow : "none"}>
+              <Path
+                d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"
+                stroke={lampuKilat ? sc.yellow : "#FFFFFF"}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </Pressable>
+        ) : (
+          <View style={styles.tombol} />
+        )}
       </View>
 
       <View style={{ position: "absolute", left: fx, top: fy, width: fs, height: fs }} pointerEvents="none">
@@ -331,6 +389,8 @@ export default function PindaiGedungScreen() {
             fase={fase}
             detik={detik}
             saran={kurangYakinBeruntun >= SARAN_SETELAH}
+            statusNarasi={statusNarasi}
+            onToggleNarasi={toggleNarasi}
             onBukaDetail={bukaDetail}
           />
           <View style={styles.tombolBaris}>
@@ -398,10 +458,12 @@ type LembarProps = {
   fase: Exclude<Fase, { t: "bidik" } | { t: "memotret" }>;
   detik: number;
   saran: boolean;
+  statusNarasi: StatusNarasi;
+  onToggleNarasi: (poi: POI) => void;
   onBukaDetail: (poi: POI) => void;
 };
 
-function LembarHasil({ fase, detik, saran, onBukaDetail }: LembarProps) {
+function LembarHasil({ fase, detik, saran, statusNarasi, onToggleNarasi, onBukaDetail }: LembarProps) {
   const badge = {
     menganalisis: { teks: `MENGANALISIS · ${detik} DTK`, bg: sc.tile, fg: sc.ink500 },
     dikenali: { teks: `TERDETEKSI ${fase.t === "dikenali" ? fase.yakin : 0}%`, bg: sc.greenSoft, fg: sc.greenText },
@@ -416,6 +478,14 @@ function LembarHasil({ fase, detik, saran, onBukaDetail }: LembarProps) {
   }[fase.t];
   const chips =
     fase.t === "dikenali" ? (Object.keys(infoGedung(fase.poi.id).fasilitas) as FasilitasTipe[]).slice(0, 3) : [];
+  const labelNarasi =
+    statusNarasi === "memutar"
+      ? "Narasi audio sedang diputar"
+      : statusNarasi === "jeda"
+        ? "Narasi audio dijeda"
+        : "Putar narasi audio";
+  const tombolNarasi =
+    statusNarasi === "memutar" ? "Jeda" : statusNarasi === "jeda" ? "Lanjut" : "Putar";
 
   return (
     <>
@@ -441,9 +511,21 @@ function LembarHasil({ fase, detik, saran, onBukaDetail }: LembarProps) {
       )}
 
       {fase.t === "dikenali" && (
-        <View style={styles.chips}>
-          {chips.map((t) => <FacilityChip key={t} tipe={t} />)}
-        </View>
+        <>
+          <View style={styles.chips}>
+            {chips.map((t) => <FacilityChip key={t} tipe={t} />)}
+          </View>
+          <Pressable
+            onPress={() => onToggleNarasi(fase.poi)}
+            accessibilityRole="button"
+            accessibilityLabel={`${tombolNarasi} narasi audio ${fase.poi.nama}`}
+            style={styles.narasiBaris}
+          >
+            <WaveBars aktif={statusNarasi === "memutar"} />
+            <Text style={styles.narasiTeks}>{labelNarasi}</Text>
+            <Text style={styles.narasiAksi}>{tombolNarasi}</Text>
+          </Pressable>
+        </>
       )}
 
       {fase.t === "tidak-yakin" && (
@@ -469,7 +551,7 @@ function LembarHasil({ fase, detik, saran, onBukaDetail }: LembarProps) {
           )}
           <Text style={styles.keterangan}>
             {saran
-              ? "Tips: pastikan cahaya cukup, mundur hingga seluruh fasad masuk bingkai, dan tahan ponsel dengan stabil."
+              ? "Tips: pastikan cahaya cukup atau nyalakan lampu kilat di pojok kanan atas, mundur hingga seluruh fasad masuk bingkai, dan tahan ponsel dengan stabil."
               : "Coba foto ulang dari sudut lain, atau pilih gedung secara manual."}
           </Text>
         </View>
@@ -488,7 +570,8 @@ function LembarHasil({ fase, detik, saran, onBukaDetail }: LembarProps) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#103C45" },
   header: { position: "absolute", left: 0, right: 0, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 24 },
-  tombol: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  tombol: { width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 22 },
+  tombolAktif: { backgroundColor: "rgba(255,196,61,0.22)" },
   judul: {
     flex: 1, textAlign: "center", fontFamily: font.head, fontSize: 17, lineHeight: 23,
     letterSpacing: -0.255, color: "#FFFFFF",
@@ -521,6 +604,12 @@ const styles = StyleSheet.create({
   keterangan: { fontFamily: font.medium, fontSize: 13, lineHeight: 19, color: sc.ink700 },
   detail: { fontFamily: font.regular, fontSize: 11, lineHeight: 15, color: sc.muted },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, minHeight: 38 },
+  narasiBaris: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: sc.mint, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12,
+  },
+  narasiTeks: { flex: 1, fontFamily: font.semibold, fontSize: 13, lineHeight: 18, color: sc.tealDark },
+  narasiAksi: { fontFamily: font.bold, fontSize: 13, lineHeight: 18, color: sc.teal },
   kandidat: {
     flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderColor: sc.line,
     backgroundColor: sc.surface2, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8,
