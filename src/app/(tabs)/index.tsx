@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Path } from "react-native-svg";
 import { NAV_HEIGHT } from "../../components/sc/AppNav";
 import { BuildingCard } from "../../components/sc/BuildingCard";
+import { IzinBanner } from "../../components/sc/IzinBanner";
 import { CampusMap, type CampusMapHandle, type LngLat } from "../../components/sc/CampusMap";
 import { MapButton, ZoomControl } from "../../components/sc/MapButton";
 import { PilihGedungModal } from "../../components/sc/PilihGedungModal";
@@ -14,6 +15,7 @@ import { ScIcon } from "../../components/sc/ScIcon";
 import { SectionHeader } from "../../components/sc/SectionHeader";
 import { POIS, type POI } from "../../data/poi";
 import { useUserCoords } from "../../hooks/useUserCoords";
+import { tampilkanKartuIzin } from "../../store/izin";
 import { font, sc, shadow } from "../../theme/sc";
 import { gedungTerdekat, ringkasanGedung } from "../../utils/gedung";
 
@@ -23,13 +25,16 @@ type Asal = POI | "me" | null;
 
 export default function Jelajahi() {
   const insets = useSafeAreaInsets();
-  const { coords, live } = useUserCoords();
+  const { coords, live, izinDiberikan } = useUserCoords();
   const peta = useRef<CampusMapHandle>(null);
   const [dari, setDari] = useState<Asal>(null);
   const [ke, setKe] = useState<POI | null>(null);
   const [pilih, setPilih] = useState<"dari" | "ke" | null>(null);
 
-  const terdekat = gedungTerdekat(coords, { batas: 3, semua: true });
+  // Tanpa izin lokasi tidak ada "terdekat": tampilkan tiga gedung pertama tanpa jarak
+  const terdekat = izinDiberikan
+    ? gedungTerdekat(coords, { batas: 3, semua: true })
+    : gedungTerdekat(coords, { semua: true }).sort((a, b) => a.poi.nama.localeCompare(b.poi.nama)).slice(0, 3);
 
   const bukaPeta = (id?: string, asal: Asal = dari) =>
     router.push({
@@ -38,6 +43,12 @@ export default function Jelajahi() {
     });
 
   const onPilih = (p: POI | "me") => {
+    // "Lokasi saya" butuh izin lokasi; tanpa izin, minta lagi lewat kartu izin
+    if (p === "me" && !izinDiberikan) {
+      setPilih(null);
+      void tampilkanKartuIzin();
+      return;
+    }
     if (pilih === "dari") {
       setDari(p);
       if (ke) bukaPeta(ke.id, p);
@@ -119,20 +130,28 @@ export default function Jelajahi() {
                 label="Pusatkan ke lokasi saya"
                 size={34}
                 iconSize={20}
-                onPress={() => peta.current?.flyTo([coords.longitude, coords.latitude], 16.5)}
+                onPress={() => {
+                  if (izinDiberikan) peta.current?.flyTo([coords.longitude, coords.latitude], 16.5);
+                  else void tampilkanKartuIzin();
+                }}
               />
             </View>
           </View>
 
           <View style={styles.terdekat}>
-            <SectionHeader title="Bangunan terdekat" action="Lihat semua" onAction={() => router.navigate("/fasilitas")} />
+            <SectionHeader
+              title={izinDiberikan ? "Bangunan terdekat" : "Bangunan kampus"}
+              action="Lihat semua"
+              onAction={() => router.navigate("/fasilitas")}
+            />
+            {!izinDiberikan && <IzinBanner teks="Bangunan terdekat dan jaraknya memerlukan izin lokasi." />}
             {terdekat.map((g) => (
               <BuildingCard
                 key={g.poi.id}
                 variant="jelajah"
                 nama={g.poi.nama}
                 ringkasan={ringkasanGedung(g)}
-                jarakM={g.jarak}
+                jarakM={izinDiberikan ? g.jarak : undefined}
                 onPress={() => router.push({ pathname: "/gedung/[id]", params: { id: g.poi.id } })}
               />
             ))}
