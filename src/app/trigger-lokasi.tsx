@@ -13,7 +13,14 @@ import { useUserCoords } from "../hooks/useUserCoords";
 import { font, sc, shadow } from "../theme/sc";
 import { jarakMeter } from "../utils/geofence";
 import { menitJalan, perkiraanTiba, teksJarak } from "../utils/jarak";
-import { hentikanNarasi, pasangPendengarNarasi, putarNarasi } from "../utils/narasi";
+import {
+  hentikanNarasi,
+  jedaNarasi,
+  lanjutNarasi,
+  pasangPendengarNarasi,
+  putarNarasi,
+  type StatusNarasi,
+} from "../utils/narasi";
 
 const W = 390;
 const H = 844;
@@ -25,7 +32,8 @@ export default function TriggerLokasiScreen() {
   const { coords, live } = useUserCoords();
   const poi = POIS.find((p) => p.id === id) ?? POIS[0];
   const [suara, setSuara] = useState(true);
-  const [bicara, setBicara] = useState(false);
+  const [narasi, setNarasi] = useState<StatusNarasi>("berhenti");
+  const bicara = narasi === "memutar";
 
   // Tanpa GPS (mis. emulator) jarak diperagakan 320 m seperti di desain
   const jarak = live ? jarakMeter(coords, poi) : 320;
@@ -33,7 +41,7 @@ export default function TriggerLokasiScreen() {
   const kutipan = dalam ? `Anda telah tiba di ${poi.nama}` : `${poi.nama}, ${teksJarak(jarak)} lagi`;
 
   useEffect(
-    () => pasangPendengarNarasi((poiId, status) => setBicara(poiId === poi.id && status === "memutar")),
+    () => pasangPendengarNarasi((poiId, status) => setNarasi(poiId === poi.id ? status : "berhenti")),
     [poi.id],
   );
 
@@ -115,26 +123,40 @@ export default function TriggerLokasiScreen() {
           </View>
         </View>
 
-        <Pressable
-          onPress={() => {
-            if (suara) hentikanNarasi();
-            else putar();
-            setSuara((v) => !v);
-          }}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: suara }}
-          accessibilityLabel="Panduan suara"
-          style={styles.suara}
-        >
-          <View style={styles.suaraIkon}>
-            <ScIcon name="headphones" size={24} color="#FFFFFF" strokeWidth={2} />
-          </View>
-          <View style={styles.suaraTeks}>
-            <Text style={styles.suaraJudul}>{suara ? "Panduan suara aktif" : "Panduan suara mati"}</Text>
-            <Text numberOfLines={1} style={styles.suaraKutipan}>{`"${kutipan}"`}</Text>
-          </View>
-          <WaveBars aktif={suara && bicara} />
-        </Pressable>
+        <View style={styles.suara}>
+          <Pressable
+            onPress={() => {
+              if (suara) hentikanNarasi();
+              else putar();
+              setSuara((v) => !v);
+            }}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: suara }}
+            accessibilityLabel="Panduan suara"
+            style={styles.suaraSakelar}
+          >
+            <View style={styles.suaraIkon}>
+              <ScIcon name="headphones" size={24} color="#FFFFFF" strokeWidth={2} />
+            </View>
+            <View style={styles.suaraTeks}>
+              <Text style={styles.suaraJudul}>
+                {!suara ? "Panduan suara mati" : narasi === "jeda" ? "Panduan suara dijeda" : "Panduan suara aktif"}
+              </Text>
+              <Text numberOfLines={1} style={styles.suaraKutipan}>{`"${kutipan}"`}</Text>
+            </View>
+            <WaveBars aktif={suara && bicara} />
+          </Pressable>
+          {suara && narasi !== "berhenti" && (
+            <Pressable
+              onPress={narasi === "memutar" ? jedaNarasi : lanjutNarasi}
+              accessibilityRole="button"
+              accessibilityLabel={narasi === "memutar" ? "Jeda panduan suara" : "Lanjutkan panduan suara"}
+              style={styles.suaraTombol}
+            >
+              <ScIcon name={narasi === "memutar" ? "pause" : "play"} size={20} color="#FFFFFF" strokeWidth={2} />
+            </Pressable>
+          )}
+        </View>
 
         <Pressable onPress={berhenti} accessibilityRole="button" style={styles.btnBahaya}>
           <Text style={styles.btnBahayaText}>Hentikan Navigasi</Text>
@@ -171,6 +193,8 @@ const styles = StyleSheet.create({
   statLabel: { fontFamily: font.regular, fontSize: 12, lineHeight: 17, color: sc.muted },
   statGaris: { width: 1, height: 30, backgroundColor: "#E3EBE9" },
   suara: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#EDFAF8", borderRadius: 18, paddingLeft: 14, paddingRight: 16, paddingVertical: 12 },
+  suaraSakelar: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 12 },
+  suaraTombol: { width: 40, height: 40, borderRadius: 20, backgroundColor: sc.teal, alignItems: "center", justifyContent: "center" },
   suaraIkon: { width: 40, height: 40, borderRadius: 13, backgroundColor: sc.teal, alignItems: "center", justifyContent: "center" },
   suaraTeks: { flex: 1, minWidth: 0, gap: 2 },
   suaraJudul: { fontFamily: font.semibold, fontSize: 13, lineHeight: 18, color: sc.tealDeep },
