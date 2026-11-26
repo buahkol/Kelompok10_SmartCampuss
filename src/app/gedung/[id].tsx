@@ -10,6 +10,7 @@ import { SectionHeader } from "../../components/sc/SectionHeader";
 import { FASILITAS, type FasilitasTipe } from "../../data/fasilitas";
 import { toggleFavorit, useFavorit } from "../../store/favorit";
 import { FOTO_POI, KATEGORI_LABEL, POIS, sudahDiisi } from "../../data/poi";
+import { IzinBanner } from "../../components/sc/IzinBanner";
 import { useUserCoords } from "../../hooks/useUserCoords";
 import { font, sc, shadow } from "../../theme/sc";
 import { jarakMeter } from "../../utils/geofence";
@@ -25,7 +26,7 @@ const TINGGI_FOOTER = 12 + TINGGI_TOMBOL + 12;
 export default function DetailGedung() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const { coords } = useUserCoords();
+  const { coords, izinDiberikan } = useUserCoords();
   const [memutar, setMemutar] = useState(false);
   const favorit = useFavorit();
 
@@ -65,7 +66,11 @@ export default function DetailGedung() {
     else acc[acc.length - 1].push(f);
     return acc;
   }, []);
-  const terdekat = gedungTerdekat(coords, { kecuali: poi.id, batas: 3 });
+  // Tanpa izin lokasi, "terdekat" dihitung dari gedung ini dan jarak ke pengguna tidak ditampilkan
+  const terdekat = gedungTerdekat(
+    izinDiberikan ? coords : { latitude: poi.lat, longitude: poi.lng },
+    { kecuali: poi.id, batas: 3 },
+  );
   const atas = insets.top + 8;
 
   const toggleAudio = () => {
@@ -112,20 +117,22 @@ export default function DetailGedung() {
 
           <View style={[styles.route, shadow.brand]}>
             <View style={styles.routeCell}>
-              <Text style={styles.routeValue}>{teksJarak(jarak)}</Text>
+              <Text style={styles.routeValue}>{izinDiberikan ? teksJarak(jarak) : "–"}</Text>
               <Text style={styles.routeLabel}>Jarak</Text>
             </View>
             <View style={styles.routeSep} />
             <View style={[styles.routeCell, styles.routeCellPad]}>
-              <Text style={styles.routeValue}>{menitJalan(jarak)} mnt</Text>
+              <Text style={styles.routeValue}>{izinDiberikan ? `${menitJalan(jarak)} mnt` : "–"}</Text>
               <Text style={styles.routeLabel}>Jalan kaki</Text>
             </View>
             <View style={styles.routeSep} />
             <View style={[styles.routeCell, styles.routeCellPad]}>
-              <Text style={styles.routeValue}>{perkiraanTiba(jarak)}</Text>
+              <Text style={styles.routeValue}>{izinDiberikan ? perkiraanTiba(jarak) : "–"}</Text>
               <Text style={styles.routeLabel}>Perkiraan tiba</Text>
             </View>
           </View>
+
+          {!izinDiberikan && <IzinBanner teks="Jarak dan perkiraan tiba memerlukan izin lokasi." />}
 
           <Pressable
             onPress={toggleAudio}
@@ -180,7 +187,7 @@ export default function DetailGedung() {
                     key={g.poi.id}
                     nama={g.poi.nama}
                     ringkasan={ringkasanGedung(g)}
-                    jarakM={g.jarak}
+                    jarakM={izinDiberikan ? g.jarak : undefined}
                     onPress={() => router.push({ pathname: "/gedung/[id]", params: { id: g.poi.id } })}
                   />
                 ))}
