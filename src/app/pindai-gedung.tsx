@@ -194,7 +194,7 @@ export default function PindaiGedungScreen() {
     Animated.timing(kilat, { toValue: 0, duration: 260, useNativeDriver: true }).start();
     let hasilFoto: FotoPindai;
     try {
-      const f = await kameraRef.current.takePictureAsync({ quality: 0.5, base64: true });
+      const f = await kameraRef.current.takePictureAsync({ quality: 0.5, base64: true, shutterSound: false });
       hasilFoto = { uri: f.uri, base64: f.base64 };
     } catch (e) {
       setFase({
